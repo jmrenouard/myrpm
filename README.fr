@@ -1,5 +1,4 @@
-[1mDocumentation française[0m
-[1mUsage[0m
+Usage
     MyRPM [OPTION]
 
     MyRPM est un générateur automatique de fichier spec prêt à l'emploi.
@@ -11,7 +10,7 @@
     Ce programme gère les droits et les utilisaterus. C'est un outil simple
     qui simplifie le packaging en mode non privilégié.
 
-[1mOptions générales[0m
+Options générales
      -h, --help                             : Affichage de l'aide en ligne.
      -v, --verbose                          : Mode verbeux, affichage d'information de deboggage.
      -b, --build                            : Compilation automatique du package.
@@ -30,7 +29,7 @@
      Par défaut, la liste de fichiers est construite depuis le flux d'entrée standard.
      -o, --optimize                         : Tente d'optimiser la taille de la liste de fichier
 
-[1mOptions du package RPM[0m
+Options du package RPM
      -N, --name=<name>                      : Nom du package - Option obligatoire.
      -V, --version=<version>                : Version du package - Option obligatoire.
      -R, --release=<release>                : Release du package - Option obligatoire.
@@ -49,23 +48,23 @@
      --preun-script=<filename>              : Nom du script à inclure dans la session %preun.
      --postun-script=<filename>             : Nom du script à inclure dans la session %postun.
 
-[1mExemples[0m
-  [1mRéalisation rapide d'une image du répertoire /home/jmrenouard/myrpmBuildDir[0m
+Exemples
+  Réalisation rapide d'une image du répertoire /home/jmrenouard/myrpmBuildDir
     MyRPM -v -d /home/jmrenouard/myrpmBuildDir -r
     /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
 
-  [1mUne autre version[0m
-    cd /home/jmrenouard/myrpmBuildDir && MyRPM -v -d . -r . -N toto -V 1.0 -R
-    1 -b
+  Une autre version
+    cd /home/jmrenouard/myrpmBuildDir && MyRPM -v -d . -r . -N toto -V 1.0
+    -R 1 -b
 
-  [1mLa même avec des interactions avec les outils UNIX[0m
-    cd /home/jmrenouard/myrpmBuildDir && find `pwd` -iname '*' -print | MyRPM
-    -v -r /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
+  La même avec des interactions avec les outils UNIX
+    cd /home/jmrenouard/myrpmBuildDir && find `pwd` -iname '*' -print |
+    MyRPM -v -r /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
 
     find /home/jmrenouard/myrpmBuildDir | MyRPM -r
     /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1
 
-  [1mExplications[0m
+  Explications
     Le script réalise les opérations suivantes :
 
     Find construit la liste de tous les fichiers contenus dans le répertoie
@@ -75,14 +74,14 @@
     /home/jmrenouard/myrpmBuildDir dans le package ayant toto comme nom, 1.0
     comme version et 1 comme release.
 
-    MyRPM considère /home/jmrenouard/myrpmBuildDir comme répertoire root ( / )
-    si bien que tous les fichiers seront installé à la racine par le programme
-    rpm.
+    MyRPM considère /home/jmrenouard/myrpmBuildDir comme répertoire root ( /
+    ) si bien que tous les fichiers seront installé à la racine par le
+    programme rpm.
 
-  [1mRepackager une configuration existante[0m
+  Repackager une configuration existante
     rpm -ql yum | MyRPM -v -N yum -V 2.7 -R 1_jmr -b
 
-  [1mExplications[0m
+  Explications
     Rpm donne la liste des fichiers du package Yum installé sur le système.
 
     MyRPM packages tous les fichiers de ce package dans un nouveau package
@@ -91,40 +90,33 @@
     Il s'agit d'un nouveau moyen de packager des modifications depuis un
     système installé.
 
-[1mAutres fonctionnalités[0m
+Autres fonctionnalités
     MyRPM support la création de compte utilisateur et des groupes. A la
     création du RPM, MyRPM embarque les informations sur les groupes et
     utilisateurs. MyRPM construit des packages intelligents capable de
     vérifier la présence de groupes et utilisateurs avant l'installation des
     fichiers .
 
-    MyRPM supporte aussi les liens symboliquesce qui facilite la substitution
-    des liens "courant" après installation.
+    MyRPM supporte aussi les liens symboliquesce qui facilite la
+    substitution des liens "courant" après installation.
 
     MyRPM est éprouvé en environnementde production et peut construire des
-    RPMs volumineux facilement. MyRPM supporte également les noms de fichiers
-    tordus tel que les fichiers compilésjava pour les classes internes.
+    RPMs volumineux facilement. MyRPM supporte également les noms de
+    fichiers tordus tel que les fichiers compilésjava pour les classes
+    internes.
 
     MyRPM supporte l'ensemble des scripts de pre et post install uninstall.
 
-[1mExemple de fichier de configuration[0m
+Exemple de fichier de configuration
     Myrpm utilise le fichier utilisateur pour configurer les valeurs par
     défaut.
 
-  [1mExemples de $HOME/.rpmmacros standard[0m
+  Exemples de $HOME/.rpmmacros standard
     %_topdir /home/jmrenouard/redhat %packager Jean-Marie
     Renouard<jmrenouard@gmail.com> %vendor LightPath %vendor_url
-    http://www.jmrenouard.fr %distribution Red Hat Enterprise 4/5/6 %dist_tag
-    .1 %_tmppath /var/tmp
+    http://www.jmrenouard.fr %distribution Red Hat Enterprise 4/5/6
+    %dist_tag .1 %_tmppath /var/tmp
 
-[1mAide à l'amélioration du produit[0m
-  [1mMerci de soumettre les erreurs et les remarques sur http://code.google.com/p/myrpm/issues/list[0m
-  [1mVous pouvez contactez Jean-Marie Renouard <jmrenouard at gmail.com> pour plus de détails.[0m
-[1mPOD ERRORS[0m
-    Hey! [1mThe above document had some coding errors, which are explained
-    below:[0m
-
-    Around line 1334:
-        Non-ASCII character seen before =encoding in 'française'. Assuming
-        ISO8859-1
-
+Aide à l'amélioration du produit
+  Merci de soumettre les erreurs et les remarques sur http://code.google.com/p/myrpm/issues/list
+  Vous pouvez contactez Jean-Marie Renouard <jmrenouard at gmail.com> pour plus de détails.
