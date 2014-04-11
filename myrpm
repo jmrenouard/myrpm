@@ -1,20 +1,37 @@
 #!/usr/bin/perl 
+
+
+#------------------------------------------------------------------------------
 #
-# MyRPM is distributed under the GPL v2 licence terms
+# MyRPM - Rpm Utilities
+# Copyright (c) Jean-Marie RENOUARD 2014 - LightPath
 # Contact : Jean-Marie Renouard <jmrenouard at gmail.com>
 #
+# This program is open source, licensed under the Artistic Licence v2.0.
+#
+# Artistic Licence 2.0
+# Everyone is permitted to copy and distribute verbatim copies of 
+# this license document, but changing it is not allowed.
+#
+#------------------------------------------------------------------------------
+#
 #CURRENT WORK IN PROGRESSS
-# Remove optimisation by default unstable features
-# In the future must becomes the default behaviour and nooptimze a alternate option
-# Try to define a Web Interface
 # ENLIGHTMENT ROAD
-# FEA 11 : Pass all corrections for perl critics
-# FEA 13 : config from rpm --showrc
-# FEA 16 : autobuild list for install
-# FEA 21 : Simplify arbo big work to do  !!!
-# FEA 23 : correct handling for dirAlias %{_usr} and %{_bindir}
-# FEA 24 : template for user and group creation
-# FEA 24 : template for user and group creation
+# FEA 0  : Using RPM::SpecFile Module
+# FEA 1  : Data model rewrite
+# FEA 2  : Switch to Simple::Template instead of Text::Template
+# FEA 3  : Include RPM Signing
+# FEA 4  : Include Building RPM with rpmbuild
+# FEA 5  : Include init building environment steps
+# FEA 6  : Adding optionnal rpmlint review
+# FEA 7  : Adding repository management: create, update and fan out
+# FEA 8  : Pass all corrections for perl critics
+# FEA 9  : config from rpm --showrc
+# FEA 10 : autobuild list for install
+# FEA 11 : Simplify arbo big work to do  !!!
+# FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
+# FEA 13 : template for user and group creation
+# FEA 14 : template for user and group creation
 
 use warnings;
 use strict;
