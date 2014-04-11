@@ -1,0 +1,58 @@
+#!/bin/sh
+
+SAT_SERVER_CONNEXION_STR=ciweb2g@rhnsat1g.bserv1.local
+DEFAULT_ES4_CHANNEL=ciweb2g-rhel-4-es-x86_64
+DEFAULT_AS4_CHANNEL=ciweb2g-rhel-4-as-x86_64
+DEFAULT_USER=`whoami`
+DEFAULT_SERVER=rhnsat1g.bserv1.local
+DEFAULT_TMP_RPM_DIR=/tmp/rpmPush
+
+if [ -n "$DEFAULT_USER" ]
+then
+        echo "DEFAULT_USER [OK]"
+else
+	echo "DEFAULT_USER non initialise"
+        echo -n "Entrer DEFAULT_USER: "
+        read DEFAULT_USER
+fi
+echo "USING $DEFAULT_USER"
+
+ssh $SAT_SERVER_CONNEXION_STR "mkdir -p $DEFAULT_TMP_RPM_DIR"
+ssh $SAT_SERVER_CONNEXION_STR "rm -Rf $DEFAULT_TMP_RPM_DIR/*"
+
+index=1    # Initialise le compteur.
+
+for arg in "$@"  
+do
+	echo "Arg #$index = $arg"
+  	let "index+=1"
+  	
+	
+	RPM_NAME=`basename $arg`
+	SOURCE_OPTION=""
+
+	[ `echo $RPM_NAME | grep ".src.rpm" | wc -l` -eq "1" ] && SOURCE_OPTION="--source"
+	RHNPUSH_CMD="rhnpush --force -c$DEFAULT_AS4_CHANNEL -c$DEFAULT_ES4_CHANNEL -u$DEFAULT_USER --server=$DEFAULT_SERVER $SOURCE_OPTION $DEFAULT_TMP_RPM_DIR/$RPM_NAME"
+
+	scp $arg $SAT_SERVER_CONNEXION_STR:$DEFAULT_TMP_RPM_DIR
+	if [ "$?" ]; then
+		echo "Problem while copying RPM to satelitte server."
+		exit 1;
+	fi
+	echo "SIGNATURE de $RPM_NAME"	
+	ssh -t $SAT_SERVER_CONNEXION_STR "rpm --addsign $DEFAULT_TMP_RPM_DIR/$RPM_NAME"
+	if [ "$?" ]; then
+		echo "Problem while signing RPM on satelitte server."
+		exit 1;
+	fi
+
+	echo "RHNSAT mot de passe de $DEFAULT_USER"	
+	ssh -t $SAT_SERVER_CONNEXION_STR "$RHNPUSH_CMD"
+	if [ "$?" ]; then
+		echo "Problem while pushing RPM on channel."
+		exit 1;
+	fi
+	
+done
+
+ssh $SAT_SERVER_CONNEXION_STR "rm -Rf $DEFAULT_TMP_RPM_DIR/*"

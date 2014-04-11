@@ -1,0 +1,13 @@
+#!/bin/bash
+
+printUsage() {
+	echo "rpmFactory fonctionne avec un fichier de configuration."	
+	echo "rpmFactory construit un RPM et compile ce dernier sur un serveur distant"	
+	exit 0
+}
+
+[ -n "$MYRPM" ] || printUsage
+
+
+#$MYRPM -N $APPLI -V $VERSION -R $RELEASE -S "$SUMMARY" -D "$DESCRIPTION" -n -d . -r . -x "$EXCLUDE" -C "$CHANGELOG" --requires="$REQUIRES" --pre-script="pre.sh" --post-script="post.sh"
+$MYRPM -N $APPLI -V $VERSION -R $RELEASE -S "$SUMMARY" -D "$DESCRIPTION" -n -c -b -d . -r . -x "$EXCLUDE" -C "$CHANGELOG" --requires="$REQUIRES" --pre-script="pre.sh" --post-script="post.sh"

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+PASSWD_FILE=$HOME/.passwords
+LOCAL=${1:-"/var/www/html/repo"}
+HOST=jmrenouard.fr
+REMOTE=/fastecks.com/repo
+USER=$(grep -vE "^\s*#" $PASSWD_FILE|grep "ftpuser"| cut -d= -f2)
+PASS=$(grep -vE "^\s*#" $PASSWD_FILE|grep "ftppassword"| cut -d= -f2)
+
+lftp -e "mirror -R $LOCAL $REMOTE;quit" -u $USER,$PASS $HOST

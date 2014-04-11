@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+use strict;
+use Expect;
+
+my $timeout=60;
+my $passFile=$ENV{'HOME'}."/.passwords";
+#print "$passFile";
+my $cmdSign="addsign";
+
+open my $fh, '<', $passFile or die "Can't open file $!";
+my $text_file = do { local $/; <$fh> };
+my $signPass=$1 if ($text_file=~ /gpgpassword=(.*?)\n/);
+
+my $command="rpm --$cmdSign ". join " ", @ARGV;
+
+print " => $command\n";
+
+my $exp = Expect->spawn($command) or die "Cannot spawn $command: $!\n";
+$exp->raw_pty(1);
+SAISIE:
+$exp->expect($timeout,
+        [ '.+ passe:' => sub {
+		     $exp->send("$signPass\n");
+                     goto SAISIE;
+		 }
+        ],
+		        [ '.+ passphare:' => sub {
+		     $exp->send("$signPass\n");
+                     goto SAISIE;
+		 }
+        ],
+	[ '.+\r\n$' => sub { 
+			goto SAISIE; } ],
+);
+
+$exp->soft_close();

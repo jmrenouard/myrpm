@@ -1,0 +1,64 @@
+#!/bin/bash
+
+printUsage() {
+	echo "rpmFactory works with config file calledbuild.sh."	
+	echo "rpmFactory builds RPM, pushes RPM on YUM repositories if asked"	
+	exit 0
+}
+
+
+if [[ "$VERBOSE" && "$VERBOSE" -eq "1" ]]; then
+	VERBOSE="-v"
+else 
+	VERBOSE=""
+fi
+
+if [[ "$NODOC" && "$NODOC" -eq "1" ]]; then
+	NODOC="-n"
+else 
+	NODOC=""
+fi
+
+if [[ "$NOCONFIG" && "$NOCONFIG" -eq "1" ]]; then
+	NOCONFIG="-c"
+else 
+	NOCONFIG=""
+fi
+
+if [[ "$NOSTRIP" && "$NOSTRIP" -eq "1" ]]; then
+	NOSTRIP="-i"
+else 
+	NOSTRIP=""
+fi
+
+[ -n "$ARCHI" ] 	|| ARCHI=`arch`
+#[ -n "$ARCHI" ] 	|| ARCHI=noarch
+[ -n "$LTOPDIR" ] 	|| LTOPDIR=/usr/src/redhat
+[ -n "$SDIR" ] 		|| SDIR=SRPMS
+[ -n "$BDIR" ] 		|| BDIR=RPMS/$ARCHI
+[ -n "$SPECDIR" ] 	|| SPECDIR=SPECS
+[ -n "$X64DIR" ] 	|| X64DIR=RPMS/x86_64
+[ -n "$MYRPM" ] 	|| MYRPM="sudo perl $HOME/myrpm/myrpm/myrpm"
+
+
+#Overloading EXCLUDE FILE
+if [[ "$OVERLOADING_EXCLUDE" -eq "0" ]]; then
+	EXCLUDE="etc\/httpd$,etc\/httpd\/conf\.d$,var$,var/www$,var/www/html$,log_convertPropsFiles.txt$,packaging.log$,opt$,opt/ciweb2g$,opt/ciweb2g/applis$,opt/ciweb2g/products$,opt/ciweb2g/applis/webapps$,opt/ciweb2g/applis/current/webapps$,opt/ciweb2g/applis/current$,etc$,etc/init.d$,etc/rc.d$,etc/rc.d/init.d$,usr$,usr/local$,build.sh$,pre.sh$,post.sh$,\.rpm$,\.tar\.gz$,$EXCLUDE"
+else
+	echo "EXCLUDE: $EXCLUDE"
+fi
+
+[ -n "$REQUIRES" ]      &&  REQUIRES="--requires $REQUIRES"
+
+#echo "REQUIRES  : $REQUIRES"
+$MYRPM -A $ARCHI -N $APPLI -V $VERSION -R $RELEASE -S "$SUMMARY" -D "$DESCRIPTION" $VERBOSE $NOCONFIG $NOSTRIP $NODOC -b -d . -r . -x "$EXCLUDE" -C "$CHANGELOG" $REQUIRES --pre-script="pre.sh" --post-script="post.sh" --preun-script="preun.sh" --postun-script="postun.sh"
+
+cp  $LTOPDIR/$SDIR/$APPLI*-$VERSION-$RELEASE.src.rpm .
+cp  $LTOPDIR/$BDIR/$APPLI*-$VERSION-$RELEASE.$ARCHI.rpm .
+
+if [ "$1" == "--push" ]; then 
+	. pushRpm $APPLI-$VERSION-$RELEASE.src.rpm $APPLI-$VERSION-$RELEASE.$ARCHI.rpm
+fi
+if [ "$1" == "--pushProd" ]; then 
+	. pushRpmProd $APPLI-$VERSION-$RELEASE.src.rpm $APPLI-$VERSION-$RELEASE.$ARCHI.rpm
+fi

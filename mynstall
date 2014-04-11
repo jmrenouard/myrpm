@@ -1,0 +1,117 @@
+#!/bin/sh
+NAME="MYRPM INSTALLER"
+VERSION="1.0"
+BASEDIR=`dirname $0`
+
+if [[ -z $BASEDIR  || "$BASEDIR" = "" || "$BASEDIR" = "." ]]
+then
+	BASEDIR=`pwd`;
+fi 
+
+printInfo() {
+	zenity	--info \
+		--window-icon=/dev/null \
+		--text="$1"
+}
+
+STDOUT=`mktemp`
+zenity	--title "$NAME - v$VERSION" \
+	--window-icon=/dev/null\
+	--list \
+	--checklist \
+	--column " " \
+	--column "Item" \
+	--column "Description" \
+	TRUE SUDOERS "Install Sudo configuration for you user" \
+	TRUE PMD "Perl modules dependencies, Perl modules needed by Myrpm to work" \
+	TRUE CMBS "Full script installation" \
+	TRUE RDE "Home RPM developement Environment installation" \
+	TRUE SRF "Sample RPM factory installation in \$HOME/integration" \
+	> $STDOUT
+
+
+if grep "PMD" $STDOUT > /dev/null ; then
+	printInfo "Perl modules dependencies will be installed."
+
+     	ARCHIVE_DIR="$BASEDIR/../dependencies"
+
+	MODULE_LIST="Getopt-Long-2.36
+IO-Zlib-1.05
+Archive-Tar-1.30
+Text-Template-1.44"
+
+
+	cd $ARCHIVE_DIR
+	for ar in $MODULE_LIST
+	do
+		echo "INSTALLING PERL MODULE : $ar"
+		tar xzvf "$ar.tar.gz"
+	
+		cd $ar
+
+		#install perl module	
+		perl ./Makefile.PL
+		make 
+		make test
+		
+		if [ `whoami` == "root" ]; then
+			make install
+		else
+			printInfo "Root password required to install module $ar"
+			su -c 'make install'
+		fi
+
+		#cleaning the build module dir
+		cd ..
+		/bin/rm -Rf $ar
+	done
+	printInfo "Perl Module dependencies installed."
+
+fi
+
+cd $BASEDIR
+
+createLocalBinPath() {
+	# script installation
+	[ -d $HOME/bin ] || (
+		mkdir $HOME/bin; \
+		echo "export PATH=\"$PATH:$HOME/bin\"" >> $HOME/.bashrc \
+		)
+}
+
+chexecLocalBinPath() {
+	#rights 
+	chmod +x $HOME/bin/*
+}
+
+if grep "CMBS" $STDOUT > /dev/null ; then
+	printInfo "Full script installation."
+	createLocalBinPath
+	cp $BASEDIR/../shells/* $HOME/bin
+	chexecLocalBinPath
+	printInfo "Cluster suite installation finished."
+fi
+
+if grep "RDE" $STDOUT > /dev/null ; then
+	printInfo "Rpm environment installation."
+	# installation .rpmmacros
+	#cp conf/.rpmmacros $HOME
+	sh $BASEDIR/shells/rpmMacroConfig
+	# folder hierarchy
+	mkdir -p $HOME/redhat/{RPMS,SRPMS,SOURCES,SPECS,BUILD}
+	printInfo "Rpm environment installation finished"
+fi
+
+if grep "SRF" $STDOUT > /dev/null ; then
+	printInfo "Rpm factory sample installation."
+	# integration folder
+	mkdir -p $HOME/integration/sample_root
+
+	cp $BASEDIR/shells/sample_build.sh $HOME/integration/sample_root/build.sh
+	chmod +x $HOME/integration/sample_root/*
+
+	echo "#!/bin/sh" > $HOME/integration/sample_root/pre.sh
+	echo "#!/bin/sh" > $HOME/integration/sample_root/post.sh
+	printInfo "Rpm factory sample installation finished"
+fi
+exit 0

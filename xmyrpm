@@ -1,0 +1,249 @@
+#!/bin/sh
+NAME="XMyRpm"
+VERSION="2.2"
+
+#DIALOG="/usr/bin/Xdialog"
+DIALOG="/usr/bin/dialog"
+MYRPM="/usr/bin/myrpm"
+
+BUILD_TMPL="/usr/local/myrpm/shells/build_tpl.sh"
+INTEGRATION_ROOT="$HOME/integration/"
+
+displayRadioBoxUid() {
+	CMD="$DIALOG --combobox 'Owner_Selection'"
+
+	USERS=`mktemp`
+	sort /etc/passwd > "$USERS"
+	exec < $USERS
+	while read user
+	do
+		Uid=$(echo $user | cut -d':' -f 3)
+		Name=$(echo $user | cut -d':' -f 1)
+		CMD="$CMD $Name($Uid)"
+	done 
+	rm -f $USERS
+	exec $CMD
+}
+displayRadioBoxGid() {
+	CMD="$DIALOG --combobox 'Group_Selection'"
+
+	GRPS=`mktemp`
+	sort /etc/group > "$GRPS"
+	exec < $GRPS
+	while read group
+	do
+		Gid=$(echo $group | cut -d':' -f 3)
+		Name=$(echo $group | cut -d':' -f 1)
+		CMD="$CMD $Name($Gid)"
+	done 
+	rm -f $GRPS
+	exec $CMD
+}
+
+displayRightsSelect() {
+OUT_ZEN=`mktemp`
+$DIALOG --no-tags --checklist 'Selection des Droits' 0 0 10 OwnerR 'Read rights for Owner' on OwnerX 'Execution rights for Owner' on OwnerW 'Write rights for Owner' on GroupR 'Read rights for Group' on GroupX 'Execution rights for Group' on GroupW 'Write rights for Group' off OtherR 'Read rights for Other users' off OtherX 'Execution rights for Other users' off OtherW 'Write rights for Other users' off 2>$OUT_ZEN
+
+ur=0;
+if grep OwnerR $OUT_ZEN > /dev/null; then 
+	let "ur += 4"
+fi
+
+if grep OwnerW $OUT_ZEN > /dev/null; then
+	 let "ur += 2"
+fi
+
+if grep OwnerX $OUT_ZEN > /dev/null; then
+	let "ur += 1"
+fi
+
+gr=0;
+if grep GroupR $OUT_ZEN > /dev/null; then 
+	let "gr += 4"
+fi
+
+if grep GroupW $OUT_ZEN > /dev/null; then
+	 let "gr += 2"
+fi
+
+if grep GroupX $OUT_ZEN > /dev/null; then
+	let "gr += 1"
+fi
+
+or=0;
+if grep OtherR $OUT_ZEN > /dev/null; then 
+	let "or += 4"
+fi
+
+if grep OtherW $OUT_ZEN > /dev/null; then
+	 let "or += 2"
+fi
+
+if grep OtherX $OUT_ZEN > /dev/null; then
+	let "or += 1"
+fi
+
+echo $ur$gr$or
+}
+
+getTopDir() {
+	echo $(grep topdir $HOME/.rpmmacros | awk '{print $2}')
+}
+
+getLastestProperty() {
+	TOPDIR=$(getTopDir)
+	SPEC_FILE=$(ls -1t $TOPDIR/SPECS | grep $2 | head -n 1)
+	echo $(grep $1: $TOPDIR/SPECS/$SPEC_FILE | awk '{print $2}')
+}
+
+getChangeLogs() {
+	TOPDIR=$(getTopDir)
+	SPEC_FILE=$(ls -1t $TOPDIR/SPECS | grep $1 | head -n 1)
+	echo $(grep -A 3 %changelog $TOPDIR/SPECS/$SPEC_FILE)
+}
+
+printInfo() {
+	$DIALOG --infobox \"$*\" 0 0 100
+}
+
+displayPackageInfo() {
+	$DIALOG --3inputsbox  "Package information" 0 0 "Package Name" "$1"  "Version Number" "$2" "Release Number" "$3"
+}
+displayPackagingInfo() {
+	$DIALOG --3inputsbox  "Packaging information" 0 0 "Required Packages (comma separated)" "$1"  "Exclude patterns (comma separated)" "$2" "ChangeLog for this release" "$3"
+}
+
+displayFileSelect() {
+	$DIALOG --title "$1" --fselect "$2" 0 0
+}
+
+displayDirSelect() {
+	$DIALOG --title "$1" --dselect "$2" 0 0
+}
+
+displayYesNoSelect() {
+	$DIALOG --yesno "$1" 0 0
+}
+
+APPLI="testAppli"
+VERSION=1.0
+RELEASE=1
+RES=$(displayPackageInfo $APPLI $VERSION $RELEASE 2>&1)
+if [ "$?" -ne "0" ]; then
+	printInfo "Packaging process Canceled :("
+	exit 1
+fi
+
+#Check non null values
+APPLI=$(echo $RES| cut -d'/' -f1)
+VERSION=$(echo $RES| cut -d'/' -f2)
+RELEASE=$(echo $RES| cut -d'/' -f3)
+
+REQUIRES=$(getLastestProperty Requires $APPLI| tr ' ' ',')
+
+RES=$(displayPackagingInfo $REQUIRES 2>&1)
+if [ "$?" -ne "0" ]; then
+	printInfo "Packaging process Canceled :("
+	exit 1
+fi
+
+#Check non null values
+REQUIRES=$(echo $RES| cut -d'/' -f1)
+ADDITIONAL_EXCLUDES=$(echo $RES| cut -d'/' -f2)
+CHANGELOG=$(echo $RES| cut -d'/' -f3)
+
+EXCLUDE="build.sh,post.sh,pre.sh,\.rpm$"
+if [ "$ADDITIONAL_EXCLUDES" != "" ]; then
+	EXCLUDE="$EXCLUDE,$ADDITIONAL_EXCLUDES"
+fi
+
+
+#Check non null values, sh exetension, start with sh shibang
+PRE_SCRIPT=$(displayFileSelect "Pre_installation_shell_script" $HOME 2>&1)
+if [ "$?" -ne "0" ]; then
+	printInfo "Packaging process Canceled :("
+	exit 1
+fi
+
+#Check non null values, sh exetension, start with sh shibang
+POST_SCRIPT=$(displayFileSelect "Post_installation_shell_script" $HOME 2>&1)
+if [ "$?" -ne "0" ]; then
+	printInfo "Packaging process Canceled :("
+	exit 1
+fi
+
+PACK_TYPE="ARCHIVE"
+displayYesNoSelect "Archive based packaging ?"
+[ "$?" -ne "0" ] && PACK_TYPE="DIRECTORY"
+
+ROOT_DIR="."
+USER_ARCHIVE=""
+USER_ARCHIVE=`id -u`
+GROUP_ARCHIVE=`id -g`
+RIGTHS_ARCHIVE="755"
+#check sh extension
+if [ "$PACK_TYPE" == "DIRECTORY" ]; then
+	#check tar, tar.gz or tgz extension
+	ROOT_DIR=$(displayDirSelect "Select the root directory" $HOME 2>&1)
+else
+	#check tar, tar.gz or tgz extension
+	ARCHIVE_FILE=$(displayFileSelect "Select a tar or tar.gz file archive" $HOME 2>&1)
+
+	USER_ARCHIVE=$(displayRadioBoxUid 2>&1)
+	USER_ARCHIVE=$(echo $USER_ARCHIVE| cut -d'(' -f1)
+	GROUP_ARCHIVE=$(displayRadioBoxGid 2>&1)
+	GROUP_ARCHIVE=$(echo $GROUP_ARCHIVE| cut -d'(' -f1)
+	RIGTHS_ARCHIVE=$(displayRightsSelect)
+fi
+
+# Just build the command myrpm call from there !
+echo "* Package 	: $APPLI-$VERSION-$RELEASE"
+
+echo "* ChangeLog 	: $CHANGELOG"
+echo "* Requires 	: $REQUIRES"
+echo "* Excludes 	: $EXCLUDE"
+
+echo "* Pre script 	: $PRE_SCRIPT"
+echo "* Post script 	: $POST_SCRIPT"
+
+
+echo "* Rpm Packaging type: $PACK_TYPE"
+
+echo "* Archive File	: $ARCHIVE_FILE"
+echo "* Archive User	: $USER_ARCHIVE"
+echo "* Archive Group	: $GROUP_ARCHIVE"
+echo "* Archive Rights	: $RIGTHS_ARCHIVE"
+echo "* Root Dir	: $ROOT_DIR"
+
+TMP_DIR=`mktemp -d`
+if [ "$PACK_TYPE" == "ARCHIVE" ]; then
+	tar xzvf $ARCHIVE_FILE -C $TMP_DIR
+	chmod -R $RIGTHS_ARCHIVE $TMP_DIR/* 
+	sudo chown -R $USER_ARCHIVE:$GROUP_ARCHIVE $TMP_DIR/*
+	ROOT_DIR=$TMP_DIR
+fi
+
+
+displayYesNoSelect "Create a rpm factory ?"
+if [ "$?" -eq "0" ]; then
+	sudo rm -Rf $INTEGRATION_ROOT/$APPLI
+	mkdir -p $INTEGRATION_ROOT/$APPLI
+	sudo cp -a $ROOT_DIR $INTEGRATION_ROOT/$APPLI
+	cp $PRE_SCRIPT $INTEGRATION_ROOT/$APPLI/pre.sh	
+	cp $POST_SCRIPT $INTEGRATION_ROOT/$APPLI/post.sh
+ 	cp $BUILD_TMPL $INTEGRATION_ROOT/$APPLI/build_t.sh 
+
+	sed 	-e "s/%APPLI%/$APPLI/g" \
+	 	-e "s/%VERSION%/$VERSION/g" \
+	 	-e "s/%RELEASE%/$RELEASE/g" \
+	 	-e "s/%REQUIRES%/$REQUIRES/g" \
+	 	-e "s/%CHANGELOG%/$CHANGELOG/g" \
+	 	-e "s/%EXCLUDE%/$EXCLUDE/g" \
+		 $INTEGRATION_ROOT/$APPLI/build_t.sh > $INTEGRATION_ROOT/$APPLI/build.sh
+	rm -f $INTEGRATION_ROOT/$APPLI/build_t.sh
+else
+	cd $ROOT_DIR
+	$MYRPM -N $APPLI -V $VERSION -R $RELEASE -n -d . -r . -b --requires="$REQUIRES" -C "$CHANGELOG" --post-script="$POST_SCRIPT" --pre-script="$PRE_SCRIPT" -x "$EXCLUDE"
+	cd -
+fi
+exit 0

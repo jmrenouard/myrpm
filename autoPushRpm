@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+use strict;
+
+use Expect;
+
+my $timeout=60;
+my $user=shift;
+my $userPass=shift;
+my $channelPass=shift;
+
+my $command="pushRpm ". join " ", @ARGV;
+
+print " => $command\n";
+
+my $exp = Expect->spawn($command) or die "Cannot spawn $command: $!\n";
+$exp->raw_pty(1);
+#exp->debug(2);
+SAISIE:
+$exp->expect($timeout,
+        [ 'Entrer DEFAULT_USER:' => sub {
+                    # print "\t\t*DEMANDE USER....: $user send\n";
+		     $exp->send("$user\n");
+                     goto SAISIE;
+		 }
+        ],
+	[ 'USING .+$' => sub { 
+		#print "\t\tUSER OK\n"; 
+		goto SAISIE; } ],
+	[ 'SIGNATURE de .+$' => sub {
+		#print "\t\tDEMANDE SIGNATURE OK\n"; 
+		goto SAISIE; }
+	 ],
+
+        [ 'Enter pass phrase:\s*$' => sub {
+                     $exp->send("$channelPass\n");
+                     goto SAISIE;
+		 }
+        ],
+
+        [ 'Red Hat Network password:' => sub {
+                     $exp->send("$userPass\n");
+                     goto SAISIE;
+		 }
+        ],
+	[ '.+\r\n$' => sub { 
+		#	print "\t\tVOID LINE\n"; 
+			goto SAISIE; } ],
+);
+
+$exp->soft_close();

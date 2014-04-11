@@ -1,0 +1,100 @@
+#!/bin/sh
+NAME="rpm .rpmmacros config."
+VERSION="1.0"
+
+printInfo() {
+	zenity 	--window-icon=/dev/null \
+		--info \
+		--text="$1"
+}
+printQuestion() {
+	zenity 	--window-icon=/dev/null \
+		--title "$1" \
+		--question \
+		--text "$2" 
+	echo $?
+}
+
+printTextBox()
+{
+	zenity 	--window-icon=/dev/null \
+		--title "$1" \
+		--entry\
+		--text "$2" \
+       		--entry-text "$3"
+}
+printRadioBoxDistribution() {
+		ans=$(zenity  	--list\
+				--text "Distribution"\
+				--radiolist\
+				--column "Pick" \
+				--column "Distribution" \
+				TRUE "Red Hat Enterprise 4" \
+				FALSE "Red Hat Enterprise 3" \
+				FALSE "Red Hat Application Server 4" \
+				FALSE "Red Hat Application Server 3" \
+				FALSE "Fedora Core 1" \
+				FALSE "Fedora Core 2" \
+				FALSE "Fedora Core 3" \
+				FALSE "Fedora Core 4" \
+				FALSE "Fedora Core 5" \
+				FALSE "Fedora Core 6" \
+				FALSE "Fedora Core 7" \
+			); 
+		echo $ans
+}
+if [ $(printQuestion "Configuration \".rpmmacros\"" "Do you want to continue ?") -eq "0" ]; then
+	echo "continuing ..."		
+else 
+	printInfo "Bye !"
+fi
+
+P_NAME=$(printTextBox "Packager Name" "Packager Name" "Jean-Marie Renouard")
+if [ "$?" -ne "0" ]; then
+	printInfo "Packager Name Canceled :("
+	exit 1
+fi
+
+P_EMAIL=$(printTextBox "Packager Email" "Packager Email" "jmrenouard@gmail.com")
+if [ "$?" -ne "0" ]; then
+	printInfo "Packager Email Canceled :("
+	exit 1
+fi
+
+V_NAME=$(printTextBox "Vendor Name" "Vendor Name" "Pages Jaunes")
+if [ "$?" -ne "0" ]; then
+        printInfo "Vendor Name Canceled :("
+        exit 1
+fi
+
+V_URL=$(printTextBox "Vendor Url" "Vendor Url" "http://www.pagesjaunes.fr")
+if [ "$?" -ne "0" ]; then
+        printInfo "Vendor Url Canceled :("
+        exit 1
+fi
+
+D_NAME=$(printRadioBoxDistribution)
+if [ "$?" -ne "0" ]; then
+        printInfo "Distribution Name Canceled :("
+        exit 1
+fi
+
+L_ARCH=`arch`
+if [ $(printQuestion "Deploy \".rpmmacros\"" "Do you really want to deploy ?") -eq "0" ]; then
+	rm -f $HOME/.rpmmacros
+(cat <<SETVAR
+%_topdir        $HOME/redhat
+%packager       $P_NAME<$P_EMAIL>
+%vendor         $V_NAME
+%vendor_url     $V_URL
+%distribution   $D_NAME
+%_arch		$L_ARCH
+%dist_tag       .1
+%_tmppath       /var/tmp
+%_signature 	gpg
+%_gpg_name  	$P_NAME
+SETVAR
+) > $HOME/.rpmmacros
+
+mkdir -p $HOME/redhat/{RPMS,SRPMS,BUILD,SOURCES,SPECS}
+fi

@@ -1,4 +1,244 @@
-myrpm
-=====
+[1mUsage[0m
+    MyRPM [OPTION]
 
-Rpm Packaging utilities
+    MyRPM is a automatic spec file generator and builder.
+
+    Myrpm allow you to install freely software on a rpm compliant system and
+    realize a binary package from a list of file.
+
+    This program manages rigths and users. It s a simple tool that simplify
+    packaging in chroot mode.
+
+[1mGeneral Options[0m
+     -h, --help                             : Print this help.
+     -v, --verbose                          : Print debug information, verbose mode.
+     -m, --multiple                         : Split into 3 packages : main, doc and config
+     -b, --build                            : Build the package automatically at the end.
+     -a, --archive=filename                 : RPM Creation based on a archive file
+     -u, --uid=user id or name              : User id for archive file
+     -g, --gid=user id or name              : Group id for archive file
+     -n, --nodoc                            : Avoid documentation file detection
+     -i, --nostip                           : Avoid binary stripping 
+     -c, --noconfig                         : Avoid config file detection
+     -s, --noreserved                       : Avoid reserved directory
+     -t, --template=filename                        : Generate the spec skeleton from this template.
+     -x, --exclude="pattern1,pattern2"      : Exclude some file patterns.
+     -r, --root-directory=<directory>       : Root directory ( / by default ).
+     -d, --directory=<directory>            : Directory where is the tree to package
+     by default, list of files is build from the stdin data
+     -o, --optimize                         : Try to perform a file list optimisation
+
+[1mPackage Options[0m
+     -N, --name=<name>                      : Package name - This option is mandatory
+     -V, --version=<version>                : Package version - This option is mandatory
+     -R, --release=<release>                : Package release - This option is mandatory
+     -C, --changelog=<changelog>            : Package changeLog
+     -D, --description=<description>        : Package Description.
+     -S, --summary=<summary>                : Package Summary.
+     -P, --packager=<packager>              : Packager identity.
+     -U, --vendor-url=<vendor url>          : Vendor URL.
+     -O, --vendor=<vendor>                  : Vendor name.
+     -A, --architecture=<archi>             : Target architecture.
+     -T, --distribution=<distro>            : Target distribution.
+     --requires=<dependency>,...            : Dependency list.
+     --build-script=<filename>              : Script filename to include in the %build session.
+     --pre-script=<filename>                : Script filename to include in the %pre session.
+     --post-script=<filename>               : Script filename to include in the %post session.
+     --preun-script=<filename>              : Script filename to include in the %preun session.
+     --postun-script=<filename>             : Script filename to include in the %postun session.
+
+[1mExamples[0m
+  [1mRealize a kick rpm snapshot of /home/jmrenouard/myrpmBuildDir[0m
+    MyRPM -v -d /home/jmrenouard/myrpmBuildDir -r
+    /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
+
+  [1mAn other version[0m
+    cd /home/jmrenouard/myrpmBuildDir && MyRPM -v -d . -r . -N toto -V 1.0 -R
+    1 -b
+
+  [1mThe same with UNIX tools interaction[0m
+    cd /home/jmrenouard/myrpmBuildDir && find `pwd` -iname '*' -print | MyRPM
+    -v -r /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
+
+    find /home/jmrenouard/myrpmBuildDir | MyRPM -r
+    /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1
+
+  [1mExplanations[0m
+    This script performs the following operations :
+
+    Find build the list of all the files in /home/jmrenouard/myrpmBuildDir.
+
+    MyRPM packages all the files /home/jmrenouard/myrpmBuildDir in a package
+    with toto as name.
+
+    MyRPM consider /home/jmrenouard/myrpmBuildDir as the root of all the files
+    so all this files will be installed from the root file system by the rpm
+    program.
+
+  [1mRepackage existing configuration[0m
+    rpm -ql yum | MyRPM -v -N yum -V 2.7 -R 1_jmr -b
+
+  [1mExplanations[0m
+    Rpm gives the list of the files in the yum package installed on the
+    system.
+
+    MyRPM packages all the files in a package with yum as name and 1_jmr as
+    release.
+
+    This is a new way to package modification on a installed system.
+
+[1mOthers features as is[0m
+    This tools handles user and group creation. When building RPM, myrpm
+    embeds groups and users information and build a package which check groups
+    and users before installing files.
+
+    MyRPM supports also symbolic links so that you can easy substitute
+    "current" link after install.
+
+    MyRPM is proven in production environment can build big RPM easily. MyRPM
+    supports fuzzy file names such as innner class files generated by javac.
+
+    MyRPM supports pre and post install uninstall scripts.
+
+[1mConfiguration file samples[0m
+    Myrpm tool is an ecology-friendly configurated.
+
+  [1mStandard $HOME/.rpmmacros sample[0m
+    %_topdir /home/jmrenouard/redhat %packager Jean-Marie
+    Renouard<jmrenouard@gmail.com> %vendor LightPath %vendor_url
+    http://www.jmrenouard.fr %distribution Red Hat Enterprise 4/5/6 %dist_tag
+    .1 %_tmppath /var/tmp
+
+[1mHelp to improve this tool[0m
+  [1mSubmit bugs or remarks at http://code.google.com/p/myrpm/issues/list[0m
+  [1mYou can also contact me at Jean-Marie Renouard <jmrenouard at gmail.com>[0m
+[1mDocumentation française[0m
+[1mUsage[0m
+    MyRPM [OPTION]
+
+    MyRPM est un générateur automatique de fichier spec prêt à l'emploi.
+
+    Myrpm vous prmet d'installer des logiciel librement sur un système Linux
+    compatible RPM et de réaliser des paquets RPMs binaires depuis une liste
+    de fichiers.
+
+    Ce programme gère les droits et les utilisaterus. C'est un outil simple
+    qui simplifie le packaging en mode non privilégié.
+
+[1mOptions générales[0m
+     -h, --help                             : Affichage de l'aide en ligne.
+     -v, --verbose                          : Mode verbeux, affichage d'information de deboggage.
+     -b, --build                            : Compilation automatique du package.
+     -a, --archive=filename                 : Création d'un RPM à partir d'une archive
+     -u, --uid=user id or name              : Identifiant utilisateur pour l'archive
+     -g, --gid=user id or name              : Identifiant de groupe pour l'archive
+     -n, --nodoc                            : Annulation de la detection des fichiers de documentation 
+     -i, --nostip                           : Annulation de du retrait des informations des binaires 
+     -c, --noconfig                         : Annulation de la detection des fichiers de configuration
+     -s, --noreserved                       : Annulation de la detection des repertoires réservés
+     -m, --multiple                         : Séparation en 3 packets : principal, doc et config
+     -t, --template=filename                : Spécification d'un fichier template aternatif.
+     -x, --exclude="pattern1,pattern2"      : Exclusion de certaines formes de fichier.
+     -r, --root-directory=<directory>       : Répertoire racine  ( / par défaut ).
+     -d, --directory=<directory>            : Répertoire à packager.
+     Par défaut, la liste de fichiers est construite depuis le flux d'entrée standard.
+     -o, --optimize                         : Tente d'optimiser la taille de la liste de fichier
+
+[1mOptions du package RPM[0m
+     -N, --name=<name>                      : Nom du package - Option obligatoire.
+     -V, --version=<version>                : Version du package - Option obligatoire.
+     -R, --release=<release>                : Release du package - Option obligatoire.
+     -C, --changelog=<changelog>            : ChangeLog du package
+     -D, --description=<description>        : Description du package.
+     -S, --summary=<summary>                : Résumé du package.
+     -P, --packager=<packager>              : Identité du packageur.
+     -U, --vendor-url=<vendor url>          : URL du fournisseur.
+     -O, --vendor=<vendor>                  : Nom du fournisseur.
+     -A, --architecture=<archi>             : Architecture cible.
+     -T, --distribution=<distro>            : Distribution cible.
+     --requires=<dependency>,...            : Liste des dépendances.
+     --build-script=<filename>              : Nom du script à inclure dans la session %build.
+     --pre-script=<filename>                : Nom du script à inclure dans la session %pre.
+     --post-script=<filename>               : Nom du script à inclure dans la session %post.
+     --preun-script=<filename>              : Nom du script à inclure dans la session %preun.
+     --postun-script=<filename>             : Nom du script à inclure dans la session %postun.
+
+[1mExemples[0m
+  [1mRéalisation rapide d'une image du répertoire /home/jmrenouard/myrpmBuildDir[0m
+    MyRPM -v -d /home/jmrenouard/myrpmBuildDir -r
+    /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
+
+  [1mUne autre version[0m
+    cd /home/jmrenouard/myrpmBuildDir && MyRPM -v -d . -r . -N toto -V 1.0 -R
+    1 -b
+
+  [1mLa même avec des interactions avec les outils UNIX[0m
+    cd /home/jmrenouard/myrpmBuildDir && find `pwd` -iname '*' -print | MyRPM
+    -v -r /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1 -b
+
+    find /home/jmrenouard/myrpmBuildDir | MyRPM -r
+    /home/jmrenouard/myrpmBuildDir -N toto -V 1.0 -R 1
+
+  [1mExplications[0m
+    Le script réalise les opérations suivantes :
+
+    Find construit la liste de tous les fichiers contenus dans le répertoie
+    /home/jmrenouard/myrpmBuildDir.
+
+    MyRPM packages tous les fichiers du répertoie
+    /home/jmrenouard/myrpmBuildDir dans le package ayant toto comme nom, 1.0
+    comme version et 1 comme release.
+
+    MyRPM considère /home/jmrenouard/myrpmBuildDir comme répertoire root ( / )
+    si bien que tous les fichiers seront installé à la racine par le programme
+    rpm.
+
+  [1mRepackager une configuration existante[0m
+    rpm -ql yum | MyRPM -v -N yum -V 2.7 -R 1_jmr -b
+
+  [1mExplications[0m
+    Rpm donne la liste des fichiers du package Yum installé sur le système.
+
+    MyRPM packages tous les fichiers de ce package dans un nouveau package
+    avec yum comme nom.
+
+    Il s'agit d'un nouveau moyen de packager des modifications depuis un
+    système installé.
+
+[1mAutres fonctionnalités[0m
+    MyRPM support la création de compte utilisateur et des groupes. A la
+    création du RPM, MyRPM embarque les informations sur les groupes et
+    utilisateurs. MyRPM construit des packages intelligents capable de
+    vérifier la présence de groupes et utilisateurs avant l'installation des
+    fichiers .
+
+    MyRPM supporte aussi les liens symboliquesce qui facilite la substitution
+    des liens "courant" après installation.
+
+    MyRPM est éprouvé en environnementde production et peut construire des
+    RPMs volumineux facilement. MyRPM supporte également les noms de fichiers
+    tordus tel que les fichiers compilésjava pour les classes internes.
+
+    MyRPM supporte l'ensemble des scripts de pre et post install uninstall.
+
+[1mExemple de fichier de configuration[0m
+    Myrpm utilise le fichier utilisateur pour configurer les valeurs par
+    défaut.
+
+  [1mExemples de $HOME/.rpmmacros standard[0m
+    %_topdir /home/jmrenouard/redhat %packager Jean-Marie
+    Renouard<jmrenouard@gmail.com> %vendor LightPath %vendor_url
+    http://www.jmrenouard.fr %distribution Red Hat Enterprise 4/5/6 %dist_tag
+    .1 %_tmppath /var/tmp
+
+[1mAide à l'amélioration du produit[0m
+  [1mMerci de soumettre les erreurs et les remarques sur http://code.google.com/p/myrpm/issues/list[0m
+  [1mVous pouvez contactez Jean-Marie Renouard <jmrenouard at gmail.com> pour plus de détails.[0m
+[1mPOD ERRORS[0m
+    Hey! [1mThe above document had some coding errors, which are explained
+    below:[0m
+
+    Around line 1334:
+        Non-ASCII character seen before =encoding in 'française'. Assuming
+        ISO8859-1
+
