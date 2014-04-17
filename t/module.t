@@ -2,9 +2,7 @@
 
 use Test::More; 
 
-require_ok ('RPM::SpecFile');
-require_ok ('Simple::Template');
-require_ok ('Tar::Archive');
+#require_ok ('RPM::SpecFile');
 require_ok ('Text::Template');
 require_ok ('Archive::Tar');
 require_ok ('File::stat');

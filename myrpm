@@ -19,7 +19,7 @@
 # ENLIGHTMENT ROAD
 # FEA 0  : Using RPM::SpecFile Module
 # FEA 1  : Data model rewrite
-# FEA 2  : Switch to Simple::Template instead of Text::Template
+# FEA 2  : Switch to Template::Magic instead of Text::Template
 # FEA 3  : Include RPM Signing
 # FEA 4  : Include Building RPM with rpmbuild
 # FEA 5  : Include init building environment steps
