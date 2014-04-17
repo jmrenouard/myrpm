@@ -1,6 +1,4 @@
 #!/usr/bin/perl 
-
-
 #------------------------------------------------------------------------------
 #
 # MyRPM - Rpm Utilities
@@ -32,6 +30,7 @@
 # FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
 # FEA 13 : template for user and group creation
 # FEA 14 : template for user and group creation
+# FEA 15 : fatpack script
 
 use warnings;
 use strict;
@@ -149,6 +148,7 @@ GetOptions(
     "U|url-vendor=s"     => \$VendorUrl,
     "A|architecture=s"   => \$Archi,
     "T|distribution=s"   => \$Distro,
+    "I|sign"   => \$Distro,
     "requires=s"         => \$requires_string,
     "pre-script=s"       => \$pre_script,
     "post-script=s"      => \$post_script,

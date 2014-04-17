@@ -1,10 +1,23 @@
 #!/bin/sh
+#------------------------------------------------------------------------------
+#
+# MyRPM - Rpm Utilities
+# Copyright (c) Jean-Marie RENOUARD 2014 - LightPath
+# Contact : Jean-Marie Renouard <jmrenouard at gmail.com>
+#
+# This program is open source, licensed under the Artistic Licence v2.0.
+#
+# Artistic Licence 2.0
+# Everyone is permitted to copy and distribute verbatim copies of 
+# this license document, but changing it is not allowed.
+#
+#------------------------------------------------------------------------------
 
 SAT_SERVER_CONNEXION_STR=ciweb2g@rhnsat1g.bserv1.local
-DEFAULT_ES4_CHANNEL=ciweb2g-rhel-4-es-x86_64
-DEFAULT_AS4_CHANNEL=ciweb2g-rhel-4-as-x86_64
+DEFAULT_RH62_CHANNEL=ciweb2g-rhel-4-es-x86_64
+DEFAULT_RH64_CHANNEL=ciweb2g-rhel-4-as-x86_64
 DEFAULT_USER=`whoami`
-DEFAULT_SERVER=rhnsat1g.bserv1.local
+DEFAULT_SERVER=rhnsa01.internal.local
 DEFAULT_TMP_RPM_DIR=/tmp/rpmPush
 
 if [ -n "$DEFAULT_USER" ]
@@ -32,7 +45,7 @@ do
 	SOURCE_OPTION=""
 
 	[ `echo $RPM_NAME | grep ".src.rpm" | wc -l` -eq "1" ] && SOURCE_OPTION="--source"
-	RHNPUSH_CMD="rhnpush --force -c$DEFAULT_AS4_CHANNEL -c$DEFAULT_ES4_CHANNEL -u$DEFAULT_USER --server=$DEFAULT_SERVER $SOURCE_OPTION $DEFAULT_TMP_RPM_DIR/$RPM_NAME"
+	RHNPUSH_CMD="rhnpush --force -c$DEFAULT_RH64_CHANNEL -c$DEFAULT_RH62_CHANNEL -u$DEFAULT_USER --server=$DEFAULT_SERVER $SOURCE_OPTION $DEFAULT_TMP_RPM_DIR/$RPM_NAME"
 
 	scp $arg $SAT_SERVER_CONNEXION_STR:$DEFAULT_TMP_RPM_DIR
 	if [ "$?" ]; then
