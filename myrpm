@@ -42,7 +42,9 @@ use Getopt::Long;
 use File::Find;
 use File::Basename;
 use File::Spec;
+use Data::Dumper;
 use Cwd;
+use Expect;
 use Carp qw(confess);
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
@@ -95,7 +97,7 @@ my $archiveRootPath = "/tmp/myrpm";
 ### Misc declaration section
 # Var to store each line
 my $line = q();
-
+my @other_arg=();
 # File list
 my @files     = ();
 my @instFiles = ();
@@ -117,7 +119,7 @@ my (
     $pre_script,    $build_script,    $post_script, $preun_script,
     $postun_script, $exclude_pattern, $uid,         $gid,
     $nodoc,         $noconf,          $nores,       $optimize,
-    $nostrip,
+    $nostrip,       $Sign,            $Password
 );
 
 GetOptions(
@@ -148,23 +150,28 @@ GetOptions(
     "U|url-vendor=s"     => \$VendorUrl,
     "A|architecture=s"   => \$Archi,
     "T|distribution=s"   => \$Distro,
-    "I|sign"   => \$Distro,
+    "sign"               => \$Sign,
+    "password=s"         => \$Password,
     "requires=s"         => \$requires_string,
     "pre-script=s"       => \$pre_script,
     "post-script=s"      => \$post_script,
     "preun-script=s"     => \$preun_script,
     "postun-script=s"    => \$postun_script,
-    "build-script=s"     => \$build_script
+    "build-script=s"     => \$build_script,
+    '<>'                 => \&add_args
 );
 
+sub add_args {
+    push @other_arg, @_;
+}
 printUsage($0) if defined $help;
 
 ($templateName) || ( $templateName = shift ) || ( $templateName = q() );
-($root_dir)     || ( $root_dir     = shift ) || ( $root_dir     = q() );
+    ($root_dir)     || ( $root_dir     = shift ) || ( $root_dir     = q() );
 $root_dir =~ s/\/$//;
 
 ($snap_dir) || ( $snap_dir = shift ) || ( $snap_dir = q() );
-$snap_dir =~ s/\/$//;
+    $snap_dir =~ s/\/$//;
 
 ($exclude_pattern)
   || ( $exclude_pattern = shift )
@@ -174,23 +181,11 @@ $snap_dir =~ s/\/$//;
 
 ($uid) || ( $uid = shift ) || ( $uid = 0 );
 ($gid) || ( $gid = shift ) || ( $gid = 0 );
-($Name) || ( $Name = shift ) || ( printError("Missing -N option : mandatory") );
-($Version)
-  || ( $Version = shift )
-  || ( printError("Missing -V option : mandatory") );
-($Release)
-  || ( $Release = shift )
-  || ( printError("Missing -R option : mandatory") );
+
 ($ChangeLog)
   || ( $ChangeLog = shift )
   || ( $ChangeLog = "http://www.jmrenouard.fr - RPM solution provider" );
 
-($Description)
-  || ( $Description = shift )
-  || ( $Description = "Package $Name-$Version-$Release" );
-($Summary)
-  || ( $Summary = shift )
-  || ( $Summary = "This package is used for $Name-$Version-$Release" );
 ($Packager)
   || ( $Packager = shift )
   || ( $Packager =
@@ -241,6 +236,22 @@ print "\t * Version : " . $version_number . "\n" if defined $verbose;
 my %lusers;
 my %lgroups;
 
+
+### Signing mode detection
+if (defined $Sign) {
+    unless ( defined $Password) {
+      printError("Missing password for signing rpms....");  
+    }
+    rpmSign($Password, @other_arg);
+    exit 0;
+}
+($Name) || ( $Name = shift ) || ( printError("Missing -N option : mandatory") );
+($Version)
+  || ( $Version = shift )
+  || ( printError("Missing -V option : mandatory") );
+($Release)
+  || ( $Release = shift )
+  || ( printError("Missing -R option : mandatory") );
 ### Version : $Version
 printError("Wrong version format : XX.YY;ZZ, XX.YY, ...")
   unless ( $Version =~ /^[0-9][0-9\.]*$/ );
@@ -250,6 +261,13 @@ print "Checking version : $Version: OK\n" if defined $verbose;
 printError("Wrong release format : X without dots")
   unless ( $Release =~ /^[1-9][0-9]*$/ );
 print "Checking release : $Release: OK\n" if defined $verbose;
+($Description)
+  || ( $Description = shift )
+  || ( $Description = "Package $Name-$Version-$Release" );
+($Summary)
+  || ( $Summary = shift )
+  || ( $Summary = "This package is used for $Name-$Version-$Release" );
+
 
 ### Archive mode detection
 ### Archive file : $archive
@@ -335,7 +353,7 @@ foreach (@inputFileList) {    ### Evaluating [===|    ] % done
 
     printError("Unable to read item : $line") unless -r $line || -l $line;
 
-    #Translation of all line starting by a ./something into a absolute path
+        #Translation of all line starting by a ./something into a absolute path
 ### Original File : $line
     $line = File::Spec->rel2abs($line);
 ### Absolute File : $line
@@ -782,6 +800,35 @@ sub getScriptFileContent {
     }
 
     return join q(), @lines;
+}
+
+sub rpmSign {
+    my $password=shift;
+    my @rpmFiles=@_;
+
+    my $timeout=60;
+            my $command="rpm --addsign ". join " ", @rpmFiles;
+
+        print " => $command\n";
+
+        my $exp = Expect->spawn($command) or die "Cannot spawn $command: $!\n";
+        $exp->raw_pty(1);
+        SAISIE:
+        $exp->expect($timeout,
+            [ '.+ passe:' => sub {
+                    $exp->send("$password\n");
+                    goto SAISIE;
+                }
+            ],
+            [ '.+ passphare:' => sub {
+                    $exp->send("$password\n");
+                    goto SAISIE;
+                }
+            ],
+            [ '.+\r\n$' => sub { 
+                    goto SAISIE; } ],
+        );
+        $exp->soft_close();
 }
 
 sub getFileContents {
