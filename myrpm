@@ -46,6 +46,21 @@ use Data::Dumper;
 use Cwd;
 use Expect;
 use Carp qw(confess);
+
+my $version_number = "5.40";
+
+sub AUTOLOAD {
+    use vars qw($AUTOLOAD);
+    my $cmd = $AUTOLOAD;
+    $cmd=~s/.*:://;   
+    print  "\n","*" x 60, "\n* Catching system call : $cmd \n", "*"x60;
+    print "\nExecution : \t", $cmd, " ",  join " ", @_;
+    print "\nResult    : \t", `$cmd @_ 2>&1`;
+    my $rc=$?;
+    print "Code      : \t", $rc, "\n";
+    return $rc;
+} 
+
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
     my $string = shift;
@@ -53,7 +68,6 @@ sub trim {
     $string =~ s/\s+$//;
     return $string;
 }
-my $version_number = "5.38";
 printError("Wrong parameter : -N, -V ,-R at least\n$0 -h for help\n") if ( $#ARGV == 0 );
 
 ### Constant Configuration section
