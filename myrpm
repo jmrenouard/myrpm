@@ -256,8 +256,12 @@ if (defined $Sign) {
     unless ( defined $Password) {
       printError("Missing password for signing rpms....");  
     }
-    rpmSign($Password, @other_arg);
-    exit 0;
+    my $nb=0;
+    foreach my $rpm (grep /\.rpm/ @other_arg) {
+       rpmSign($Password, @other_arg);
+       $nb++;
+    }
+    exit 0 if ($nb == scalar @other_arg);
 }
 ($Name) || ( $Name = shift ) || ( printError("Missing -N option : mandatory") );
 ($Version)
