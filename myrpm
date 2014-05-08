@@ -15,16 +15,16 @@
 #
 #CURRENT WORK IN PROGRESSS
 # ENLIGHTMENT ROAD
+# FEA 9  : config from rpm --showrc
 # FEA 0  : Using RPM::SpecFile Module
 # FEA 1  : Data model rewrite
-# FEA 2  : Switch to Template::Magic instead of Text::Template
 # FEA 3  : Include RPM Signing
+# FEA 2  : Switch to Template::Magic instead of Text::Template
 # FEA 4  : Include Building RPM with rpmbuild
 # FEA 5  : Include init building environment steps
 # FEA 6  : Adding optionnal rpmlint review
 # FEA 7  : Adding repository management: create, update and fan out
 # FEA 8  : Pass all corrections for perl critics
-# FEA 9  : config from rpm --showrc
 # FEA 10 : autobuild list for install
 # FEA 11 : Simplify arbo big work to do  !!!
 # FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
@@ -43,7 +43,7 @@ use File::Find;
 use File::Basename;
 use File::Spec;
 use Data::Dumper;
-#use RPM::SpecFile;
+use RPM::Specfile;
 use Cwd;
 use Expect;
 use Carp qw(confess);
@@ -69,7 +69,7 @@ sub trim {
     $string =~ s/\s+$//;
     return $string;
 }
-printError("Wrong parameter : -N, -V ,-R at least\n$0 -h for help\n") if ( $#ARGV == 0 );
+printError("Wrong parameter : -N, -V ,-R at least\n$0 -h for help\n") if ( $#ARGV < 0 );
 
 ### Constant Configuration section
 my @reserved_dirs = (
@@ -102,7 +102,7 @@ my %dirAlias = (
     #	"/usr"	       => "%{_usr}",
     # "/usr/lib"     => "%{_libdir}",
 );
-#my $macrosFile = $ENV{'HOME'} . "/.rpmmacros";
+my $macrosFile = $ENV{'HOME'} . "/.rpmmacros";
 
 my $topdir          = getParameterFromConfig( "_topdir" );
 my $specDir         = $topdir . "/SPECS";
@@ -181,6 +181,7 @@ GetOptions(
 sub add_args {
     push @other_arg, @_;
 }
+
 printUsage($0) if defined $help;
 
 ($templateName) || ( $templateName = shift ) || ( $templateName = q() );
@@ -258,13 +259,13 @@ my %lgroups;
 
 
 ### Signing mode detection
-if (defined $signRpm) {
-    unless ( defined $password) {
+if (defined $signRpm and scalar(@other_arg) > 0) {
+    unless ( defined ($password)) {
       printError("Missing password for signing rpms....");  
     }
     my $nb=0;
-    foreach my $rpm (grep /\.rpm/ @other_arg) {
-       rpmSign($Password, @other_arg);
+    foreach my $rpm (grep { /\.rpm/ } @other_arg) {
+       rpmSign($password, [ $rpm ] );
        $nb++;
     }
     exit 0 if ($nb == scalar @other_arg);
@@ -709,7 +710,7 @@ exit 0;
 
 sub printUsage {
     my $s = shift;
-    print `perldoc $s`;
+    perldoc ( $s );
     exit 0;
 }
 
