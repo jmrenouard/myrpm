@@ -32,18 +32,18 @@ my $exp = Expect->spawn($command) or die "Cannot spawn $command: $!\n";
 $exp->raw_pty(1);
 SAISIE:
 $exp->expect($timeout,
-        [ '.+ passe:' => sub {
-		     $exp->send("$signPass\n");
-                     goto SAISIE;
-		 }
-        ],
-		        [ '.+ passphare:' => sub {
-		     $exp->send("$signPass\n");
-                     goto SAISIE;
-		 }
-        ],
-	[ '.+\r\n$' => sub { 
-			goto SAISIE; } ],
+    [ '.+ passe:' => sub {
+            $exp->send("$signPass\n");
+            goto SAISIE;
+        }
+    ],
+    [ '.+ passphare:' => sub {
+            $exp->send("$signPass\n");
+            goto SAISIE;
+        }
+    ],
+    [ '.+\r\n$' => sub { 
+            goto SAISIE; } ],
 );
 
 $exp->soft_close();

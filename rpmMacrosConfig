@@ -13,7 +13,7 @@
 #
 #------------------------------------------------------------------------------
 NAME="rpm .rpmmacros config."
-VERSION="1.0"
+VERSION="1.1"
 
 printInfo() {
 	zenity 	--window-icon=/dev/null \
@@ -42,17 +42,18 @@ printRadioBoxDistribution() {
 				--radiolist\
 				--column "Pick" \
 				--column "Distribution" \
-				TRUE "Red Hat Enterprise 4" \
-				FALSE "Red Hat Enterprise 3" \
-				FALSE "Red Hat Application Server 4" \
-				FALSE "Red Hat Application Server 3" \
-				FALSE "Fedora Core 1" \
-				FALSE "Fedora Core 2" \
-				FALSE "Fedora Core 3" \
-				FALSE "Fedora Core 4" \
-				FALSE "Fedora Core 5" \
-				FALSE "Fedora Core 6" \
-				FALSE "Fedora Core 7" \
+				FALSE "Centos 7" \
+				TRUE "Centos 6" \
+				FALSE "Centos 5" \
+				FALSE "Centos 4" \
+				FALSE "Red Hat Enterprise 7" \
+				FALSE "Red Hat Enterprise 6" \
+				FALSE "Red Hat Enterprise 5" \
+				FALSE "Red Hat Enterprise 4" \
+				FALSE "Fedora Core 18" \
+				FALSE "Fedora Core 19" \
+				FALSE "Fedora Core 20" \
+				FALSE "Fedora Core 21" \
 			); 
 		echo $ans
 }
@@ -74,13 +75,13 @@ if [ "$?" -ne "0" ]; then
 	exit 1
 fi
 
-V_NAME=$(printTextBox "Vendor Name" "Vendor Name" "Pages Jaunes")
+V_NAME=$(printTextBox "Vendor Name" "Vendor Name" "LightPath")
 if [ "$?" -ne "0" ]; then
         printInfo "Vendor Name Canceled :("
         exit 1
 fi
 
-V_URL=$(printTextBox "Vendor Url" "Vendor Url" "http://www.pagesjaunes.fr")
+V_URL=$(printTextBox "Vendor Url" "Vendor Url" "http://www.jmrenouard.fr")
 if [ "$?" -ne "0" ]; then
         printInfo "Vendor Url Canceled :("
         exit 1

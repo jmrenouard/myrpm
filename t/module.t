@@ -11,3 +11,8 @@ require_ok ('Getopt::Long');
 require_ok ('File::Find');
 require_ok ('File::Basename');
 require_ok ('File::Spec');
+require_ok ('Data::Dumper');
+#require_ok ('RPM::SpecFile');
+require_ok ('Cwd');
+require_ok ('Expect');
+require_ok ('Carp');

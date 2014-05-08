@@ -43,9 +43,14 @@ use File::Find;
 use File::Basename;
 use File::Spec;
 use Data::Dumper;
+#use RPM::SpecFile;
 use Cwd;
 use Expect;
 use Carp qw(confess);
+
+
+
+
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
     my $string = shift;
@@ -53,7 +58,7 @@ sub trim {
     $string =~ s/\s+$//;
     return $string;
 }
-my $version_number = "5.38";
+my $version_number = "5.39";
 printError("Wrong parameter : -N, -V ,-R at least\n$0 -h for help\n") if ( $#ARGV == 0 );
 
 ### Constant Configuration section
@@ -87,11 +92,12 @@ my %dirAlias = (
     #	"/usr"	       => "%{_usr}",
     # "/usr/lib"     => "%{_libdir}",
 );
-my $macrosFile = $ENV{'HOME'} . "/.rpmmacros";
+#my $macrosFile = $ENV{'HOME'} . "/.rpmmacros";
 
-my $topdir          = getParameterFromConfig( "_topdir", "/usr/src/redhat" );
+my $topdir          = getParameterFromConfig( "_topdir" );
 my $specDir         = $topdir . "/SPECS";
 my $srcDir          = $topdir . "/SOURCES";
+my $srpmDir          = $topdir . "/SRPMS";
 my $archiveRootPath = "/tmp/myrpm";
 
 ### Misc declaration section
@@ -119,7 +125,7 @@ my (
     $pre_script,    $build_script,    $post_script, $preun_script,
     $postun_script, $exclude_pattern, $uid,         $gid,
     $nodoc,         $noconf,          $nores,       $optimize,
-    $nostrip,       $Sign,            $Password
+    $nostrip,       $signRpm,         $sign,        $password
 );
 
 GetOptions(
@@ -150,8 +156,9 @@ GetOptions(
     "U|url-vendor=s"     => \$VendorUrl,
     "A|architecture=s"   => \$Archi,
     "T|distribution=s"   => \$Distro,
-    "sign"               => \$Sign,
-    "password=s"         => \$Password,
+    "signRpm"            => \$signRpm,
+    "sign"               => \$sign,
+    "password=s"         => \$password,
     "requires=s"         => \$requires_string,
     "pre-script=s"       => \$pre_script,
     "post-script=s"      => \$post_script,
@@ -189,20 +196,23 @@ $root_dir =~ s/\/$//;
 ($Packager)
   || ( $Packager = shift )
   || ( $Packager =
-    getParameterFromConfig( "packager", "jmrenouard\@gmail.com" ) );
+    getParameterFromConfig( "packager" ) );
 ($Vendor)
   || ( $Vendor = shift )
-  || ( $Vendor = getParameterFromConfig( "vendor", "LightPath" ) );
+  || ( $Vendor = getParameterFromConfig( "vendor" ) );
 ($VendorUrl)
   || ( $VendorUrl = shift )
   || ( $VendorUrl =
-    getParameterFromConfig( "vendor_url", "http://www.jmrenouard.fr" ) );
+    getParameterFromConfig( "vendor_url" ) );
 ($Archi)
   || ( $Archi = shift )
-  || ( $Archi = getParameterFromConfig( "_arch", `arch` ) );
+  || ( $Archi = getParameterFromConfig( "_arch", "noarch" ) );
+
+my $rpmDir          = $topdir . "/RPMS/".$Archi;
+  
 ($Distro)
   || ( $Distro = shift )
-  || ( $Distro = getParameterFromConfig( "_dist", "Generic Red Hat" ) );
+  || ( $Distro = getParameterFromConfig( "_dist" ) );
 
 ($pre_script) || ( $pre_script = shift ) || ( $pre_script = q() );
 print "\n * pre : $pre_script" if defined $verbose;
@@ -238,11 +248,11 @@ my %lgroups;
 
 
 ### Signing mode detection
-if (defined $Sign) {
-    unless ( defined $Password) {
+if (defined $signRpm) {
+    unless ( defined $password) {
       printError("Missing password for signing rpms....");  
     }
-    rpmSign($Password, @other_arg);
+    rpmSign($password, @other_arg);
     exit 0;
 }
 ($Name) || ( $Name = shift ) || ( printError("Missing -N option : mandatory") );
@@ -668,14 +678,19 @@ if ( defined $archive ) {
     }
 }
 
-#Compiling package
+print "\n#Executing to build package : rpmbuild\n" if ($verbose);
+rpmbuild (
+    '--quiet', 
+    '-ba',
+    "--target=$Archi", 
+    "$specDir/$vars{'name'}.spec", 
+    defined($verbose)?"1>/dev/null 2>&1":""
+    ) if($build);
 
-#Avoid system call for portability
-my $cmd = "rpmbuild --quiet -ba --target=$Archi $specDir/$vars{'name'}.spec";
-$cmd="$cmd 1>/dev/null 2>&1" unless ($verbose);
 
-print "\n#Executing to build package : $cmd\n" if ($verbose);
-print `$cmd`                                   if ($build);
+print "\n#Signing package : rpm --addSign\n" if ($verbose);
+rpmSign ($password, [ "$srpmDir/$vars{'name'}.src.rpm", "$rpmDir/$vars{'name'}.$Archi.rpm" ]) if ($sign and $password);
+
 exit 0;
 
 sub printUsage {
