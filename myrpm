@@ -102,7 +102,6 @@ my %dirAlias = (
     #	"/usr"	       => "%{_usr}",
     # "/usr/lib"     => "%{_libdir}",
 );
-my $macrosFile = $ENV{'HOME'} . "/.rpmmacros";
 
 my $topdir          = getParameterFromConfig( "_topdir" );
 my $specDir         = $topdir . "/SPECS";
@@ -989,24 +988,17 @@ sub getInputFileLine {
 }
 
 
-# Retrieve value from files (like .rpmmacros)
 sub getParameterFromConfig {
-    my $parameter = shift;
+   my ($parameter, $default) = @_;
 
-    my $res    = shift;
-    my $opened = 1;
-    my $fh;
-    open( $fh, q(<), "$macrosFile" ) || ( $opened = 0 );
-    if ($opened) {
-        while (<$fh>) {
-            if (m/^\%$parameter\s+(.*)$/) {
-                $res = $1;
-            }
+   $default="" unless defined $default;
+   foreach my $param (`rpm --showrc | grep "\\-14\\:"`) {
+        if ($param =~ /\s$parameter\s(.*)$/) { 
+            return $1;           
         }
-
-        close($fh);
-    }
-    return $res;
+   }
+   
+   return $default;
 }
 
 sub simplifyIt {
