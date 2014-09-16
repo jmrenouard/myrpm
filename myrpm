@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 #------------------------------------------------------------------------------
 #
 # MyRPM - Rpm Utilities
@@ -8,7 +8,7 @@
 # This program is open source, licensed under the Artistic Licence v2.0.
 #
 # Artistic Licence 2.0
-# Everyone is permitted to copy and distribute verbatim copies of 
+# Everyone is permitted to copy and distribute verbatim copies of
 # this license document, but changing it is not allowed.
 #
 #------------------------------------------------------------------------------
@@ -48,19 +48,19 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.40";
+my $version_number = "5.41";
 
 sub AUTOLOAD {
     use vars qw($AUTOLOAD);
     my $cmd = $AUTOLOAD;
-    $cmd=~s/.*:://;   
+    $cmd=~s/.*:://;
     print  "\n","*" x 60, "\n* Catching system call : $cmd \n", "*"x60;
     print "\nExecution : \t", $cmd, " ",  join " ", @_;
     print "\nResult    : \t", `$cmd @_ 2>&1`;
     my $rc=$?;
     print "Code      : \t", $rc, "\n";
     return $rc;
-} 
+}
 
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim {
@@ -87,7 +87,7 @@ my @config_pattern = (
     "\.ini",  "\.xml", "\.yaml", "\.json"
 );
 my @doc_pattern =
-  ( "doc", "\.txt", "README", "LICENCE", "LICENSE", 
+  ( "doc", "\.txt", "README", "LICENCE", "LICENSE",
   "TODO", "\.html", "\.tex", "\.txt", "\.pdf" );
 
 my %dirAlias = (
@@ -139,7 +139,7 @@ my (
 
 GetOptions(
     "h|help"             => \$help,
-    "b|build"            => \$build, 
+    "b|build"            => \$build,
     "v|verbose"          => \$verbose,
     "m|multiple"         => \$multi,
     "t|template=s"       => \$templateName,
@@ -219,7 +219,7 @@ $root_dir =~ s/\/$//;
   || ( $Archi = getParameterFromConfig( "_arch", "noarch" ) );
 
 my $rpmDir          = $topdir . "/RPMS/".$Archi;
-  
+
 ($Distro)
   || ( $Distro = shift )
   || ( $Distro = getParameterFromConfig( "_dist" ) );
@@ -245,7 +245,7 @@ print "\n * install : $build_script" if defined $verbose;
 print "\n * requires info : $requires_string" if defined $verbose;
 
 my @reqs = split( q/,/, $requires_string );
-
+s/=/ = /g for (@reqs);
 @doc_pattern    = () if defined $nodoc;
 @config_pattern = () if defined $noconf;
 @reserved_dirs  = () if defined $nores;
@@ -260,7 +260,7 @@ my %lgroups;
 ### Signing mode detection
 if (defined $signRpm and scalar(@other_arg) > 0) {
     unless ( defined ($password)) {
-      printError("Missing password for signing rpms....");  
+      printError("Missing password for signing rpms....");
     }
     my $nb=0;
     foreach my $rpm (grep { /\.rpm/ } @other_arg) {
@@ -417,8 +417,8 @@ foreach (@inputFileList) {    ### Evaluating [===|    ] % done
 
 	#fix for . link
 	$pointedItem=$lnkName if ( $lnkName eq "." or $lnkName eq "./" );
-	
-        ### LINK: /$line_chrooted 
+
+        ### LINK: /$line_chrooted
 	### DEST: $pointedItem
 
         $symbolic_links{ "/" . $line_chrooted } = $pointedItem;
@@ -442,7 +442,7 @@ foreach (@inputFileList) {    ### Evaluating [===|    ] % done
 
     confess ("$line without valid uid name") unless defined $user_infos{$uid}{'name'};
     confess ("$line without valid gid name") unless defined $group_infos{$gid}{'name'};
-    
+
     print "\n* user=", $user_infos{$uid}{'name'}   if defined $verbose;
     print "\n* group=", $group_infos{$gid}{'name'} if defined $verbose;
 
@@ -602,7 +602,7 @@ my $template = Text::Template->new(
     TYPE       => 'STRING',
     DELIMITERS => [ "<", ">" ]
 ) or confess "Couldn't construct template: $Text::Template::ERROR";
-    
+
 my %vars = (
     name              => "$Name",
     version           => "$Version",
@@ -637,7 +637,7 @@ my %vars = (
 
     # must be information only
     listOfDocFiles => \@defDocFiles,
-	
+
 	# must be information only
     listOfConfFiles => \@defConfFiles,
 
@@ -694,10 +694,10 @@ if ( defined $archive ) {
 
 print "\n#Executing to build package : rpmbuild\n" if ($verbose);
 rpmbuild (
-    '--quiet', 
+    '--quiet',
     '-ba',
-    "--target=$Archi", 
-    "$specDir/$vars{'name'}.spec", 
+    "--target=$Archi",
+    "$specDir/$vars{'name'}.spec",
     defined($verbose)?"1>/dev/null 2>&1":""
     ) if($build);
 
@@ -854,7 +854,7 @@ sub rpmSign {
                     goto SAISIE;
                 }
             ],
-            [ '.+\r\n$' => sub { 
+            [ '.+\r\n$' => sub {
                     goto SAISIE; } ],
         );
         $exp->soft_close();
@@ -993,11 +993,11 @@ sub getParameterFromConfig {
 
    $default="" unless defined $default;
    foreach my $param (`rpm --showrc | grep "\\-14\\:"`) {
-        if ($param =~ /\s$parameter\s(.*)$/) { 
-            return $1;           
+        if ($param =~ /\s$parameter\s(.*)$/) {
+            return $1;
         }
    }
-   
+
    return $default;
 }
 
@@ -1117,10 +1117,10 @@ sub getSpecTemplate {
 
     # THE TEMPLATE
     my $defaultSpecTemplate = << 'EOF';
-Summary: 		<$summary> 
+Summary: 		<$summary>
 Name:			<$name>
 Version: 		<$version>
-Release:	   	<$release>	
+Release:	   	<$release>
 License: 		GPL
 URL: 			<$vendor_url>
 Source0: 		%{name}-%{version}.tar.gz
@@ -1131,10 +1131,10 @@ Packager:		<$packager>
 <if (@reqs == 0 ) {$OUT.="AutoReqProv: 		no"; } >
 BuildRoot: 		%{_tmppath}/%{name}-%{version}-root
 < foreach $req (@reqs) { $OUT.= "Requires: $req\n"; }>
-%description 
+%description
 <$description>
 
-< if (@listOfConfFiles != 0) { 
+< if (@listOfConfFiles != 0) {
     $OUT.="%package config
 Summary: Configuration for $name
 Group: System/Administration
@@ -1150,11 +1150,11 @@ Group: System/Administration
 
 %description doc
 Documentation files for $name
-$description"; 
+$description";
 } >
 
 %prep
-#%setup -q 
+#%setup -q
 #-n %{name}-%{version}
 %setup -c -q
 < if ($nostrip) { $OUT.="%define __strip /bin/true
@@ -1188,8 +1188,8 @@ mkdir -p %{buildroot}/usr/lib/debug
 <  if (@groups == 0 ) {
 	    $OUT.="# No group Creation";
 	} else {
-	    $OUT.="# Group creation"; 
-	    foreach $i (@groups){ 
+	    $OUT.="# Group creation";
+	    foreach $i (@groups){
 		$gid=$$i{gid};
 		$gname=$$i{name};
 		$OUT.="\nif egrep -q \"$gname\" /etc/group; then";
@@ -1199,10 +1199,10 @@ mkdir -p %{buildroot}/usr/lib/debug
 		$OUT.="\nfi";
 	    }
 	}
-   if (@users == 0 ) {	
+   if (@users == 0 ) {
 		$OUT.="\n# No User Creation";
     } else {
-	$OUT.="\n# User creation"; 
+	$OUT.="\n# User creation";
 	foreach $i (@users) {
 	    $uname=$$i{name};
 	    $gid=$$i{gid};
@@ -1230,7 +1230,7 @@ mkdir -p %{buildroot}/usr/lib/debug
 	    $OUT.="\ncd `dirname $i`";
 	    $OUT.="\nrm -fv `basename $i`";
 	    $OUT.="\nln -fvs $pointee `basename $i`";
-	    $OUT.="\ncd -"; 
+	    $OUT.="\ncd -";
 	}>
 <$post_code>
 %preun
@@ -1242,7 +1242,7 @@ rm -Rf %{buildroot}
 
 #Regular file and dir list
 %files
-< foreach $i (@listOfFiles) { 
+< foreach $i (@listOfFiles) {
 	    $mode=$$i{mode};
 	    $path=$$i{r_path};
 	    $comment=$$i{comment};
@@ -1255,9 +1255,9 @@ rm -Rf %{buildroot}
 < if ( @listOfConfFiles != 0 ) { $OUT.="#Configuration file list"; }>
 < if ( @listOfConfFiles != 0 ) { $OUT.= "%files config"; }>
 < foreach $i (@listOfConfFiles) { $OUT.="%attr($$i{mode} $$i{uid}, $$i{gid}) %config \"$$i{Se_path}\"\n"; }>
-< if ( @listOfDocFiles != 0 ) { 
-		$OUT.= "#Documentation file list\n"; 
-		$OUT.= "%files doc\n"; 
+< if ( @listOfDocFiles != 0 ) {
+		$OUT.= "#Documentation file list\n";
+		$OUT.= "%files doc\n";
 }>< foreach $i (@listOfDocFiles) { $OUT.= "%attr($$i{mode} $$i{uid}, $$i{gid}) %doc \"$$i{Se_path}\"\n"; }>
 %changelog
 * <$date> <$packager> <$name>-<$version>-<$release>
@@ -1299,10 +1299,10 @@ MyRPM [OPTION]
 
 MyRPM is a automatic spec file generator and builder.
 
-Myrpm allow you to install freely software on a rpm compliant system 
-and realize a binary package from a list of file. 
+Myrpm allow you to install freely software on a rpm compliant system
+and realize a binary package from a list of file.
 
-This program manages rigths and users. It s a simple tool that simplify 
+This program manages rigths and users. It s a simple tool that simplify
 packaging in chroot mode.
 
 =head1 General Options
@@ -1315,7 +1315,7 @@ packaging in chroot mode.
  -u, --uid=user id or name		: User id for archive file
  -g, --gid=user id or name		: Group id for archive file
  -n, --nodoc				: Avoid documentation file detection
- -i, --nostip				: Avoid binary stripping 
+ -i, --nostip				: Avoid binary stripping
  -c, --noconfig				: Avoid config file detection
  -s, --noreserved			: Avoid reserved directory
  -t, --template=filename			: Generate the spec skeleton from this template.
@@ -1325,7 +1325,7 @@ packaging in chroot mode.
  by default, list of files is build from the stdin data
  -o, --optimize				: Try to perform a file list optimisation
 
-=head1 Package Options 
+=head1 Package Options
 
  -N, --name=<name>			: Package name - This option is mandatory
  -V, --version=<version>		: Package version - This option is mandatory
@@ -1345,7 +1345,7 @@ packaging in chroot mode.
  --preun-script=<filename>		: Script filename to include in the %preun session.
  --postun-script=<filename>		: Script filename to include in the %postun session.
 
-=head1 Examples 
+=head1 Examples
 
 =head2 Realize a kick rpm snapshot of /home/jmrenouard/myrpmBuildDir
 
@@ -1413,7 +1413,7 @@ Myrpm tool is an ecology-friendly configurated.
 
 =head1 Help to improve this tool
 
-=head2 Submit bugs or remarks at http://code.google.com/p/myrpm/issues/list 
+=head2 Submit bugs or remarks at http://code.google.com/p/myrpm/issues/list
 
 =head2 You can also contact me at Jean-Marie Renouard <jmrenouard at gmail.com>
 
@@ -1426,8 +1426,8 @@ MyRPM [OPTION]
 
 MyRPM est un générateur automatique de fichier spec prêt à l'emploi.
 
-Myrpm vous prmet d'installer des logiciel librement sur un système Linux compatible RPM 
-et de réaliser des paquets RPMs binaires depuis une liste de fichiers. 
+Myrpm vous prmet d'installer des logiciel librement sur un système Linux compatible RPM
+et de réaliser des paquets RPMs binaires depuis une liste de fichiers.
 
 Ce programme gère les droits et les utilisaterus. C'est un outil simple qui simplifie le packaging
 en mode non privilégié.
@@ -1440,8 +1440,8 @@ en mode non privilégié.
  -a, --archive=filename			: Création d'un RPM à partir d'une archive
  -u, --uid=user id or name		: Identifiant utilisateur pour l'archive
  -g, --gid=user id or name		: Identifiant de groupe pour l'archive
- -n, --nodoc				: Annulation de la detection des fichiers de documentation 
- -i, --nostip				: Annulation de du retrait des informations des binaires 
+ -n, --nodoc				: Annulation de la detection des fichiers de documentation
+ -i, --nostip				: Annulation de du retrait des informations des binaires
  -c, --noconfig				: Annulation de la detection des fichiers de configuration
  -s, --noreserved			: Annulation de la detection des repertoires réservés
  -m, --multiple 			: Séparation en 3 packets : principal, doc et config
@@ -1452,7 +1452,7 @@ en mode non privilégié.
  Par défaut, la liste de fichiers est construite depuis le flux d'entrée standard.
  -o, --optimize				: Tente d'optimiser la taille de la liste de fichier
 
-=head1 Options du package RPM 
+=head1 Options du package RPM
 
  -N, --name=<name>			: Nom du package - Option obligatoire.
  -V, --version=<version>		: Version du package - Option obligatoire.
@@ -1472,7 +1472,7 @@ en mode non privilégié.
  --preun-script=<filename>		: Nom du script à inclure dans la session %preun.
  --postun-script=<filename>		: Nom du script à inclure dans la session %postun.
 
-=head1 Exemples 
+=head1 Exemples
 
 =head2 Réalisation rapide d'une image du répertoire /home/jmrenouard/myrpmBuildDir
 
@@ -1513,7 +1513,7 @@ Il s'agit d'un nouveau moyen de packager des modifications depuis un système ins
 
 =head1 Autres fonctionnalités
 
-MyRPM support la création de compte utilisateur et des   groupes. A la création du RPM, MyRPM embarque les informations sur les groupes et utilisateurs. 
+MyRPM support la création de compte utilisateur et des   groupes. A la création du RPM, MyRPM embarque les informations sur les groupes et utilisateurs.
 MyRPM construit des packages intelligents capable de vérifier la présence de groupes et utilisateurs avant l'installation des fichiers .
 
 MyRPM supporte aussi les liens symboliquesce qui facilite la substitution des liens "courant" après installation.
@@ -1540,6 +1540,6 @@ Myrpm utilise le fichier utilisateur pour configurer les valeurs par défaut.
 
 =head1 Aide à l'amélioration du produit
 
-=head2 Merci de soumettre les erreurs et les remarques sur http://code.google.com/p/myrpm/issues/list 
+=head2 Merci de soumettre les erreurs et les remarques sur http://code.google.com/p/myrpm/issues/list
 
 =head2 Vous pouvez contactez Jean-Marie Renouard <jmrenouard at gmail.com> pour plus de détails.
