@@ -15,7 +15,7 @@
 #
 #CURRENT WORK IN PROGRESSS
 # ENLIGHTMENT ROAD
-# FEA 0  : Using RPM::SpecFile Module
+# FEA 0  : Using RPM::Specfile Module
 # FEA 1  : Data model rewrite
 # FEA 2  : Switch to Template::Magic instead of Text::Template
 # FEA 4  : Include Building RPM with rpmbuild
@@ -27,16 +27,21 @@
 # FEA 11 : Simplify arbo big work to do  !!!
 # FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
 # FEA 13 : template for user and group creation
-# FEA 15 : fatpack script
+# FEA 15 : fatten script
 
 # VERSION 5.40
 # FEA 9  : config from rpm --showrc
 # FEA 3  : Include RPM Signing
 
+# VERSION 5.41
+# FEA 16 : Support requires with version indications
+
+# VERSION 5.42
+# FEA 17 : Removing Archive::Tar module (Huge memory and cpu improvments)
+
 use warnings;
 use strict;
 use Text::Template;
-use Archive::Tar;
 use File::stat;
 use File::Path;
 use Getopt::Long;
@@ -49,7 +54,7 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.41";
+my $version_number = "5.42";
 
 sub AUTOLOAD {
     use vars qw($AUTOLOAD);
@@ -246,7 +251,9 @@ print "\n * install : $build_script" if defined $verbose;
 print "\n * requires info : $requires_string" if defined $verbose;
 
 my @reqs = split( q/,/, $requires_string );
-s/=/ = /g for (@reqs);
+s/>=(\d)/ >= $1/g for (@reqs);
+s/<=(\d)/ <= $1/g for (@reqs);
+s/=(\d)/ = $1/g for (@reqs);
 @doc_pattern    = () if defined $nodoc;
 @config_pattern = () if defined $noconf;
 @reserved_dirs  = () if defined $nores;
@@ -315,8 +322,13 @@ if ( defined $archive ) {
     chdir $tmp_dir;
 
     my $compressed_archive = ( $archive =~ /.+?\.(?:tar\.gz|tgz)$/i );
-    my $arch_obj = Archive::Tar->new( $archive, $compressed_archive );
-    $arch_obj->extract();
+    #my $arch_obj = Archive::Tar->new( $archive, $compressed_archive );
+    #$arch_obj->extract();
+    if ($compressed_archive ) {
+        tar ("xzf", $archive);
+    } else {
+        tar ("xf", $archive);
+    }
 
     #change uid if necessary
     print "\n* $uid($gid) rigths setting." if defined $verbose;
@@ -664,14 +676,15 @@ if   ( $root_dir eq q() ) { chdir("/") }
 else                      { chdir($root_dir); }
 
 #generate Tarball
-my $tar = Archive::Tar->new;
+my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar.gz";
 foreach my $file (@files) {
     $file =~ s/^\//\.\//;
-    print "\n$file to Archive..." if defined $verbose;
-    $tar->add_files($file);
+    if (-f "$tarFilename") {
+        tar ("czf", $tarFilename, $file);
+    } else {
+        tar ("rzf", $tarFilename, $file);
+    }
 }
-
-$tar->write( "$srcDir/$vars{'name'}-$vars{'version'}.tar.gz", 1 );
 
 #Writing spec file
 open my $fh, q(>), "$specDir/$vars{'name'}.spec"
