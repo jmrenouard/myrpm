@@ -15,10 +15,8 @@
 #
 #CURRENT WORK IN PROGRESSS
 # ENLIGHTMENT ROAD
-# FEA 9  : config from rpm --showrc
 # FEA 0  : Using RPM::SpecFile Module
 # FEA 1  : Data model rewrite
-# FEA 3  : Include RPM Signing
 # FEA 2  : Switch to Template::Magic instead of Text::Template
 # FEA 4  : Include Building RPM with rpmbuild
 # FEA 5  : Include init building environment steps
@@ -29,8 +27,11 @@
 # FEA 11 : Simplify arbo big work to do  !!!
 # FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
 # FEA 13 : template for user and group creation
-# FEA 14 : template for user and group creation
 # FEA 15 : fatpack script
+
+# VERSION 5.40
+# FEA 9  : config from rpm --showrc
+# FEA 3  : Include RPM Signing
 
 use warnings;
 use strict;
