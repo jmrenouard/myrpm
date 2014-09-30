@@ -27,7 +27,8 @@ General Options
      -d, --directory=<directory>            : Directory where is the tree to package
      by default, list of files is build from the stdin data
      -o, --optimize                         : Try to perform a file list optimisation
-
+      --sign                                 : GPG Signing RPM package after building
+      --password                             : GPG Signing password
 Package Options
      -N, --name=<name>                      : Package name - This option is mandatory
      -V, --version=<version>                : Package version - This option is mandatory
@@ -75,6 +76,9 @@ Examples
     files so all this files will be installed from the root file system by
     the rpm program.
 
+  GPG signing all rpm file
+    MyRPM --sign --password=truc *.rpm
+  
   Repackage existing configuration
     rpm -ql yum | MyRPM -v -N yum -V 2.7 -R 1_jmr -b
 

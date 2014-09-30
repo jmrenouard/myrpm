@@ -28,7 +28,8 @@ Options générales
      -d, --directory=<directory>            : Répertoire à packager.
      Par défaut, la liste de fichiers est construite depuis le flux d'entrée standard.
      -o, --optimize                         : Tente d'optimiser la taille de la liste de fichier
-
+     --sign                                 : signature GPG des paquets RPM
+     --password                             : Mot de passe de signature
 Options du package RPM
      -N, --name=<name>                      : Nom du package - Option obligatoire.
      -V, --version=<version>                : Version du package - Option obligatoire.
@@ -78,6 +79,9 @@ Exemples
     ) si bien que tous les fichiers seront installé à la racine par le
     programme rpm.
 
+  Signer tous les fichiers RPM
+    MyRPM --sign --password=truc *.rpm
+    
   Repackager une configuration existante
     rpm -ql yum | MyRPM -v -N yum -V 2.7 -R 1_jmr -b
 

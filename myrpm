@@ -15,10 +15,7 @@
 #
 #CURRENT WORK IN PROGRESSS
 # ENLIGHTMENT ROAD
-# FEA 0  : Using RPM::Specfile Module
 # FEA 1  : Data model rewrite
-# FEA 2  : Switch to Template::Magic instead of Text::Template
-# FEA 4  : Include Building RPM with rpmbuild
 # FEA 5  : Include init building environment steps
 # FEA 6  : Adding optionnal rpmlint review
 # FEA 7  : Adding repository management: create, update and fan out
@@ -27,8 +24,10 @@
 # FEA 11 : Simplify arbo big work to do  !!!
 # FEA 12 : correct handling for dirAlias %{_usr} and %{_bindir}
 # FEA 13 : template for user and group creation
-# FEA 15 : fatten script
-
+# FEA 19 : Support largest packages format
+# FEA 20 : Support Pushing repository
+# FEA 21 : Support RPM critic tools
+#
 # VERSION 5.40
 # FEA 9  : config from rpm --showrc
 # FEA 3  : Include RPM Signing
@@ -38,6 +37,8 @@
 
 # VERSION 5.42
 # FEA 17 : Removing Archive::Tar module (Huge memory and cpu improvments)
+# FEA 15 : fatten script
+# FEA 4  : Include Building RPM with rpmbuild
 
 use warnings;
 use strict;
@@ -49,7 +50,6 @@ use File::Find;
 use File::Basename;
 use File::Spec;
 use Data::Dumper;
-use RPM::Specfile;
 use Cwd;
 use Expect;
 use Carp qw(confess);
@@ -140,7 +140,7 @@ my (
     $pre_script,    $build_script,    $post_script, $preun_script,
     $postun_script, $exclude_pattern, $uid,         $gid,
     $nodoc,         $noconf,          $nores,       $optimize,
-    $nostrip,       $signRpm,         $sign,        $password
+    $nostrip,       $sign,            $password
 );
 
 GetOptions(
@@ -171,7 +171,6 @@ GetOptions(
     "U|url-vendor=s"     => \$VendorUrl,
     "A|architecture=s"   => \$Archi,
     "T|distribution=s"   => \$Distro,
-    "signRpm"            => \$signRpm,
     "sign"               => \$sign,
     "password=s"         => \$password,
     "requires=s"         => \$requires_string,
@@ -266,7 +265,7 @@ my %lgroups;
 
 
 ### Signing mode detection
-if (defined $signRpm and scalar(@other_arg) > 0) {
+if (defined $sign and scalar(@other_arg) > 0) {
     unless ( defined ($password)) {
       printError("Missing password for signing rpms....");
     }
@@ -1338,7 +1337,9 @@ packaging in chroot mode.
  -d, --directory=<directory>		: Directory where is the tree to package
  by default, list of files is build from the stdin data
  -o, --optimize				: Try to perform a file list optimisation
-
+ --sign                                 : GPG Signing RPM package after building
+ --password                             : GPG Signing password
+  
 =head1 Package Options
 
  -N, --name=<name>			: Package name - This option is mandatory
@@ -1385,6 +1386,11 @@ MyRPM packages all the files /home/jmrenouard/myrpmBuildDir  in a package with t
 
 MyRPM consider /home/jmrenouard/myrpmBuildDir as the root of all the files so all this files will be installed from the root file system by the rpm program.
 
+
+
+=head2 GPG signing all rpm file
+
+MyRPM --sign --password=truc *.rpm
 
 =head2 Repackage existing configuration
 
@@ -1465,7 +1471,8 @@ en mode non privilégié.
  -d, --directory=<directory>		: Répertoire à packager.
  Par défaut, la liste de fichiers est construite depuis le flux d'entrée standard.
  -o, --optimize				: Tente d'optimiser la taille de la liste de fichier
-
+ --sign                                 : signature GPG des paquets RPM
+ --password                             : Mot de passe de signature
 =head1 Options du package RPM
 
  -N, --name=<name>			: Nom du package - Option obligatoire.
@@ -1513,6 +1520,10 @@ MyRPM packages  tous les fichiers du répertoie /home/jmrenouard/myrpmBuildDir da
 MyRPM considère /home/jmrenouard/myrpmBuildDir comme répertoire root ( / ) si bien que tous les fichiers seront installé à la racine par le programme rpm.
 
 
+=head2 Signer tous les fichiers RPM
+
+MyRPM --sign --password=truc *.rpm
+
 =head2 Repackager une configuration existante
 
 rpm -ql yum |  MyRPM -v -N yum -V 2.7 -R 1_jmr -b
@@ -1548,7 +1559,7 @@ Myrpm utilise le fichier utilisateur pour configurer les valeurs par défaut.
 %packager	Jean-Marie Renouard<jmrenouard@gmail.com>
 %vendor	LightPath
 %vendor_url	http://www.jmrenouard.fr
-%distribution  Red Hat Enterprise 4/5/6
+%distribution  Red Hat Enterprise 6/7
 %dist_tag      .1
 %_tmppath   	/var/tmp
 
