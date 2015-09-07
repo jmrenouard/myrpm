@@ -62,9 +62,9 @@ else
 fi
 
 [ -n "$REQUIRES" ]      &&  REQUIRES="--requires $REQUIRES"
-
+[ -n "$PROVIDES" ]      &&  PROVIDES="--provides $PROVIDES"
 #echo "REQUIRES  : $REQUIRES"
-$MYRPM -A $ARCHI -N $APPLI -V $VERSION -R $RELEASE -S "$SUMMARY" -D "$DESCRIPTION" $VERBOSE $NOCONFIG $NOSTRIP $NODOC -b -d . -r . -x "$EXCLUDE" -C "$CHANGELOG" $REQUIRES --pre-script="pre.sh" --post-script="post.sh" --preun-script="preun.sh" --postun-script="postun.sh"
+$MYRPM -A $ARCHI -N $APPLI -V $VERSION -R $RELEASE -S "$SUMMARY" -D "$DESCRIPTION" $VERBOSE $NOCONFIG $NOSTRIP $NODOC -b -d . -r . -x "$EXCLUDE" -C "$CHANGELOG" $REQUIRES $PROVIDES --pre-script="pre.sh" --post-script="post.sh" --preun-script="preun.sh" --postun-script="postun.sh"
 
 cp  $LTOPDIR/$SDIR/$APPLI*-$VERSION-$RELEASE.src.rpm .
 cp  $LTOPDIR/$BDIR/$APPLI*-$VERSION-$RELEASE.$ARCHI.rpm .

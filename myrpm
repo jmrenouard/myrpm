@@ -40,6 +40,9 @@
 # FEA 15 : fatten script
 # FEA 4  : Include Building RPM with rpmbuild
 
+# VERSION 5.43
+# FEA 2 : Support Provides tag and option --provides
+
 use warnings;
 use strict;
 use Text::Template;
@@ -140,7 +143,7 @@ my (
     $pre_script,    $build_script,    $post_script, $preun_script,
     $postun_script, $exclude_pattern, $uid,         $gid,
     $nodoc,         $noconf,          $nores,       $optimize,
-    $nostrip,       $sign,            $password
+    $nostrip,       $sign,            $password,    $provides_string
 );
 
 GetOptions(
@@ -174,6 +177,7 @@ GetOptions(
     "sign"               => \$sign,
     "password=s"         => \$password,
     "requires=s"         => \$requires_string,
+    "provides=s"         => \$provides_string,
     "pre-script=s"       => \$pre_script,
     "post-script=s"      => \$post_script,
     "preun-script=s"     => \$preun_script,
@@ -253,6 +257,18 @@ my @reqs = split( q/,/, $requires_string );
 s/>=(\d)/ >= $1/g for (@reqs);
 s/<=(\d)/ <= $1/g for (@reqs);
 s/=(\d)/ = $1/g for (@reqs);
+
+($provides_string)
+  || ( $provides_string = shift )
+  || ( $provides_string = q() );
+print "\n * provides info : $provides_string" if defined $verbose;
+
+my @provs = split( q/,/, $provides_string );
+s/>=(\d)/ >= $1/g for (@provs);
+s/<=(\d)/ <= $1/g for (@provs);
+s/=(\d)/ = $1/g for (@provs);
+
+
 @doc_pattern    = () if defined $nodoc;
 @config_pattern = () if defined $noconf;
 @reserved_dirs  = () if defined $nores;
@@ -622,6 +638,7 @@ my %vars = (
     summary           => "$Summary",
     description       => "$Description",
     reqs              => \@reqs,
+    provs             => \@provs,
     packager          => "$Packager",
     vendor            => "$Vendor",
     vendor_url        => "$VendorUrl",
@@ -1144,6 +1161,8 @@ Packager:		<$packager>
 <if (@reqs == 0 ) {$OUT.="AutoReqProv: 		no"; } >
 BuildRoot: 		%{_tmppath}/%{name}-%{version}-root
 < foreach $req (@reqs) { $OUT.= "Requires: $req\n"; }>
+< foreach $prov (@provs) { $OUT.= "Provides: $prov\n"; }>
+
 %description
 <$description>
 
