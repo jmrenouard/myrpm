@@ -43,6 +43,9 @@
 # VERSION 5.43
 # FEA 2 : Support Provides tag and option --provides
 
+# VERSION 5.44
+# FEA 2 : Support verbose in AUTOLOAD
+
 use warnings;
 use strict;
 use Text::Template;
@@ -57,17 +60,19 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.43";
+my $version_number = "5.44";
 
+my $verbose;
 sub AUTOLOAD {
     use vars qw($AUTOLOAD);
     my $cmd = $AUTOLOAD;
     $cmd=~s/.*:://;
-    print  "\n","*" x 60, "\n* Catching system call : $cmd \n", "*"x60;
-    print "\nExecution : \t", $cmd, " ",  join " ", @_;
-    print "\nResult    : \t", `$cmd @_ 2>&1`;
+    print  "\n","*" x 60, "\n* Catching system call : $cmd \n", "*"x60  if defined $verbose;
+    print "\nExecution : \t", $cmd, " ",  join " ", @_  if defined $verbose;
+    print "\nResult    : \t", `$cmd @_ 2>&1`  if defined $verbose;
     my $rc=$?;
-    print "Code      : \t", $rc, "\n";
+    print "Code        : \t", $rc, "\n"  if defined $verbose;
+
     return $rc;
 }
 
@@ -135,7 +140,7 @@ my @defDocFiles  = ();
 Getopt::Long::Configure('bundling');
 
 my (
-    $help,          $build,           $verbose,     $multi,
+    $help,          $build,                   ,     $multi,
     $templateName,  $root_dir,        $snap_dir,    $Name,
     $Version,       $Release,         $Description, $Summary,
     $ChangeLog,     $Packager,        $Vendor,      $VendorUrl,
