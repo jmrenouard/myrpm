@@ -46,6 +46,9 @@
 # VERSION 5.44
 # FEA 2 : Support verbose in AUTOLOAD
 
+# VERSION 5.45
+# FEA 17 : Bug fix on tar update
+
 use warnings;
 use strict;
 use Text::Template;
@@ -60,7 +63,7 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.44";
+my $version_number = "5.45";
 
 my $verbose;
 sub AUTOLOAD {
@@ -69,10 +72,10 @@ sub AUTOLOAD {
     $cmd=~s/.*:://;
     print  "\n","*" x 60, "\n* Catching system call : $cmd \n", "*"x60  if defined $verbose;
     print "\nExecution : \t", $cmd, " ",  join " ", @_  if defined $verbose;
-    print "\nResult    : \t", `$cmd @_ 2>&1`  if defined $verbose;
+    my $outp=`$cmd @_ 2>&1`;
     my $rc=$?;
+    print "\nResult    : \t$outp",   if defined $verbose;
     print "Code        : \t", $rc, "\n"  if defined $verbose;
-
     return $rc;
 }
 
@@ -697,15 +700,20 @@ if   ( $root_dir eq q() ) { chdir("/") }
 else                      { chdir($root_dir); }
 
 #generate Tarball
-my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar.gz";
+my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar";
+rm( "-f", $tarFilename);
+rm( "-f", $tarFilename.".gz");
 foreach my $file (@files) {
+
+    next unless (-f "$file");
     $file =~ s/^\//\.\//;
-    if (-f "$tarFilename") {
-        tar ("czf", $tarFilename, $file);
+    unless (-f "$tarFilename") {
+        tar ("cf", $tarFilename, $file);
     } else {
-        tar ("rzf", $tarFilename, $file);
+        tar ("rf", $tarFilename, $file);
     }
 }
+gzip($tarFilename);
 
 #Writing spec file
 open my $fh, q(>), "$specDir/$vars{'name'}.spec"
