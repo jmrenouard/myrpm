@@ -27,27 +27,23 @@
 # FEA 19 : Support largest packages format
 # FEA 20 : Support Pushing repository
 # FEA 21 : Support RPM critic tools
-#
 # VERSION 5.40
 # FEA 9  : config from rpm --showrc
 # FEA 3  : Include RPM Signing
-
 # VERSION 5.41
 # FEA 16 : Support requires with version indications
-
 # VERSION 5.42
 # FEA 17 : Removing Archive::Tar module (Huge memory and cpu improvments)
 # FEA 15 : fatten script
 # FEA 4  : Include Building RPM with rpmbuild
-
 # VERSION 5.43
 # FEA 2 : Support Provides tag and option --provides
-
 # VERSION 5.44
 # FEA 2 : Support verbose in AUTOLOAD
-
 # VERSION 5.45
 # FEA 17 : Bug fix on tar update
+# VERSION 5.46
+# FEA 18 : tar is build for a file list directly
 
 use warnings;
 use strict;
@@ -63,7 +59,7 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.45";
+my $version_number = "5.46";
 
 my $verbose;
 sub AUTOLOAD {
@@ -700,20 +696,11 @@ if   ( $root_dir eq q() ) { chdir("/") }
 else                      { chdir($root_dir); }
 
 #generate Tarball
-my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar";
+my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar.gz";
 rm( "-f", $tarFilename);
-rm( "-f", $tarFilename.".gz");
-foreach my $file (@files) {
-
-    next unless (-f "$file");
-    $file =~ s/^\//\.\//;
-    unless (-f "$tarFilename") {
-        tar ("cf", $tarFilename, $file);
-    } else {
-        tar ("rf", $tarFilename, $file);
-    }
-}
-gzip($tarFilename);
+putFileArrayContents("./found.txt", \@files);
+tar ( "-T ./found.txt ", "-czf", $tarFilename);
+unlink("./found.txt") if -f "./found.txt";
 
 #Writing spec file
 open my $fh, q(>), "$specDir/$vars{'name'}.spec"
@@ -903,6 +890,7 @@ sub rpmSign {
         $exp->soft_close();
 }
 
+
 sub getFileContents {
     my $filename = shift;
     print "* reading $filename " if defined $verbose;
@@ -913,6 +901,23 @@ sub getFileContents {
 
     close($fh);
     return @lines;
+}
+
+sub putFileArrayContents {
+    my $filename = shift;
+    my $lines=shift;
+    #print "\n*FILENAME: $filename";
+    unlink $filename if (-f $filename);
+    print "* reading $filename " if defined $verbose; 
+    my $fh;
+    open( $fh, q(>), "$filename" )
+      or confess "Couldn't open $filename for writing: $!\n";
+    foreach my $line (@{$lines}) {
+        chomp($line);
+     #   print "\n$line";
+        print $fh "$line\n";
+    }
+    close($fh);
 }
 
 sub getUserMap {
