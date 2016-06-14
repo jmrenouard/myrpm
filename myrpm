@@ -59,7 +59,7 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.46";
+my $version_number = "5.47";
 
 my $verbose;
 sub AUTOLOAD {
@@ -310,7 +310,7 @@ print "Checking version : $Version: OK\n" if defined $verbose;
 
 ### Release : $Release
 printError("Wrong release format : X without dots")
-  unless ( $Release =~ /^[1-9][0-9]*$/ );
+  unless ( $Release =~ /^[1-9][0-9]*(\.el[1-9])?$/ );
 print "Checking release : $Release: OK\n" if defined $verbose;
 ($Description)
   || ( $Description = shift )
