@@ -59,7 +59,7 @@ use Cwd;
 use Expect;
 use Carp qw(confess);
 
-my $version_number = "5.47";
+my $version_number = "5.46";
 
 my $verbose;
 sub AUTOLOAD {
@@ -700,7 +700,7 @@ my $tarFilename="$srcDir/$vars{'name'}-$vars{'version'}.tar.gz";
 rm( "-f", $tarFilename);
 putFileArrayContents("./found.txt", \@files);
 tar ( "-T ./found.txt ", "-czf", $tarFilename);
-unlink("./found.txt") if -f "./found.txt";
+#unlink("./found.txt") if -f "./found.txt";
 
 #Writing spec file
 open my $fh, q(>), "$specDir/$vars{'name'}.spec"
@@ -724,11 +724,11 @@ if ( defined $archive ) {
 
 print "\n#Executing to build package : rpmbuild\n" if ($verbose);
 rpmbuild (
-    '--quiet',
+    defined($verbose)?'--verbose':'--quiet',
     '-ba',
     "--target=$Archi",
     "$specDir/$vars{'name'}.spec",
-    defined($verbose)?"1>/dev/null 2>&1":""
+    defined($verbose)?"":"1>/dev/null 2>&1"
     ) if($build);
 
 
@@ -831,7 +831,8 @@ sub substituteAliasDir {
 sub getChangeLogs {
     my $specFile = shift;
     return q() unless ( -f $specFile );
-    print "$specFile found...." if defined $verbose;
+    print "\n* $specFile found...." if defined $verbose;
+    print "\n* reading previous change log ...." if defined $verbose;
     my @lines                = getFileContents($specFile);
     my @changeLogs           = ();
     my $changeLogHeaderFound = 0;
@@ -893,7 +894,7 @@ sub rpmSign {
 
 sub getFileContents {
     my $filename = shift;
-    print "* reading $filename " if defined $verbose;
+    print "\n* reading $filename " if defined $verbose;
     my $fh;
     open( $fh, q(<), "$filename" )
       or confess "Couldn't open $filename for reading: $!\n";
