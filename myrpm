@@ -1184,7 +1184,7 @@ BuildRoot: 		%{_tmppath}/%{name}-%{version}-root
 < foreach $req (@reqs) { $OUT.= "Requires: $req\n"; }>
 < foreach $prov (@provs) { $OUT.= "Provides: $prov\n"; }>
 
-< if ( -f "/tmp/my_requires.sh" ) {
+< if ( -f "/tmp/my-requires.sh" ) {
 $OUT.="%define _use_internal_dependency_generator 0\n";
 $OUT.="%define __find_requires /tmp/my-requires.sh\n";
 }>
@@ -1297,8 +1297,8 @@ mkdir -p %{buildroot}/usr/lib/debug
 <$postun_code>
 %clean
 rm -Rf %{buildroot}
-< if ( -f "/tmp/my_requires.sh" ) {
-$OUT.="rm -Rf /tmp/my_requires.sh\n";
+< if ( -f "/tmp/my-requires.sh" ) {
+$OUT.="rm -Rf /tmp/my-requires.sh\n";
 }>
 #Regular file and dir list
 %files
